@@ -17,6 +17,7 @@ from utils import (
     RateLimitError,
     RiotAPIError,
     UserNotFoundError,
+    check_new_riot_id,
     extract_match_info,
     get_puuid,
     get_ranked_info,
@@ -174,6 +175,21 @@ class MyBot(commands.Bot):
                             "new_rank": new_rank,
                             "new_lp": new_lp,
                         }
+                        new_riot_id = check_new_riot_id(
+                            processed_match_info,
+                            puuid,
+                            riot_id,
+                        )
+                        if(new_riot_id != ""):
+                            #update database with new riot_id
+                            doc_id = puuid
+                            doc_ref = (
+                                db.collection(TRACKED_USERS_COLLECTION).document(doc_id)
+                            )
+                            formatted_riot_id = {
+                                "riot_id": new_riot_id,
+                            }
+                            doc_ref.update(formatted_riot_id)
                         view = MatchDetailsView(
                             processed_match_info,
                             ranked_data,
