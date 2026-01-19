@@ -406,6 +406,7 @@ async def track(ctx, *, riot_id):
         )
     username = parsed[0]
     tagline = parsed[1]
+    riot_id = f"{username}#{tagline}"
     # API handling
     puuid = await get_puuid(bot.session, username, tagline, RIOT_API_KEY)
     # DB handling
@@ -416,7 +417,7 @@ async def track(ctx, *, riot_id):
     try:
         doc_ref.set(
             {
-                "riot_id": f"{username}#{tagline}",
+                "riot_id": riot_id,
                 "puuid": puuid,
                 "tier": f"{ranked_data.get('tier')}",
                 "rank": f"{ranked_data.get('rank')}",
@@ -426,7 +427,7 @@ async def track(ctx, *, riot_id):
             },
             merge=True,
         )
-        await ctx.send(f"{doc_id} is now being tracked!")
+        await ctx.send(f"{riot_id} is now being tracked!")
     except Exception as e:
         logger.exception(f"❌ ERROR: tracking: {e}")
         await ctx.send("Database write failed.")
