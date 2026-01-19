@@ -140,9 +140,9 @@ class MyBot(commands.Bot):
                 new_tier = data.get("tier")
                 new_rank = data.get("rank")
                 new_lp = data.get("LP")
-                doc.reference.update(data)
                 if old_tier == new_tier and old_rank == new_rank and old_lp == new_lp:
                     continue
+                doc.reference.update(data)
                 guild_ids = doc.get("guild_ids")
                 for guild in guild_ids:
                     channel = None
@@ -488,9 +488,9 @@ async def update(ctx):
         new_tier = data.get("tier")
         new_rank = data.get("rank")
         new_lp = data.get("LP")
-        doc.reference.update(data)
         if old_tier == new_tier and old_rank == new_rank and old_lp == new_lp:
             continue
+        doc.reference.update(data)
         riot_id = doc.get("riot_id")
         match_info = await get_recent_match_info(bot.session, puuid, RIOT_API_KEY)
         processed_match_info = extract_match_info(match_info, puuid)
