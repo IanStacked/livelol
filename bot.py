@@ -406,11 +406,11 @@ async def track(ctx, *, riot_id):
         )
     username = parsed[0]
     tagline = parsed[1]
-    doc_id = f"{username}#{tagline}"
     # API handling
     puuid = await get_puuid(bot.session, username, tagline, RIOT_API_KEY)
     # DB handling
     guild_id_str = str(ctx.guild.id)
+    doc_id = puuid
     doc_ref = db.collection(TRACKED_USERS_COLLECTION).document(doc_id)
     ranked_data = await get_ranked_info(bot.session, puuid, RIOT_API_KEY)
     try:
@@ -450,28 +450,31 @@ async def untrack(ctx, *, riot_id):
         )
     username = parsed[0]
     tagline = parsed[1]
-    doc_id = f"{username}#{tagline}"
+    riot_id = f"{username}#{tagline}"
+    # API handling
+    puuid = await get_puuid(bot.session, username, tagline, RIOT_API_KEY)
     # DB handling
     guild_id_str = str(ctx.guild.id)
+    doc_id = puuid
     doc_ref = db.collection(TRACKED_USERS_COLLECTION).document(doc_id)
     try:
         doc = doc_ref.get()
         if not doc.exists:
-            return await ctx.send(f"{doc_id} is not in the database.")
+            return await ctx.send(f"{riot_id} is not in the database.")
         data = doc.to_dict()
         guild_list = data.get("guild_ids", [])
         if guild_id_str not in guild_list:
-            return await ctx.send(f"{doc_id} is not being tracked in this server.")
+            return await ctx.send(f"{riot_id} is not being tracked in this server.")
         guild_list.remove(guild_id_str)
         if not guild_list:
             # We are the only server left, delete the whole file
             doc_ref.delete()
-            await ctx.send(f"{doc_id} is no longer tracked")
+            await ctx.send(f"{riot_id} is no longer tracked")
         else:
             data["guild_ids"] = guild_list
             del data[f"server_info.{guild_id_str}"]
             doc_ref.set(data)
-            await ctx.send(f"{doc_id} is no longer tracked")
+            await ctx.send(f"{riot_id} is no longer tracked")
     except Exception as e:
         logger.exception(f"❌ ERROR: untracking: {e}")
         await ctx.send("Database update failed")
