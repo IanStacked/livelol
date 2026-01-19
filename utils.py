@@ -107,6 +107,16 @@ async def get_ranked_info(session, puuid, riot_api_key):
 
 # Helper Functions
 
+def check_new_riot_id(match_info, puuid, riot_id) -> str:
+    """Checks if a user has changed their riotid and returns new riotid if new."""
+    for p in match_info.get("participants"):
+        if(p.get("puuid") == puuid):
+            match_riot_id = p.get('riotIdGameName') + "#" + p.get('riotIdTagline')
+            if(match_riot_id != riot_id):
+                return match_riot_id
+            else:
+                return ""
+
 
 def extract_match_info(match_dto, puuid):
     if not match_dto or "info" not in match_dto:
