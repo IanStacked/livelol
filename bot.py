@@ -190,6 +190,7 @@ class MyBot(commands.Bot):
                                 "riot_id": new_riot_id,
                             }
                             doc_ref.update(formatted_riot_id)
+                            riot_id = new_riot_id
                         view = MatchDetailsView(
                             processed_match_info,
                             ranked_data,
