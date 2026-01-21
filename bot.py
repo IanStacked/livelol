@@ -14,9 +14,6 @@ from database import GUILD_CONFIG_COLLECTION, TRACKED_USERS_COLLECTION, database
 from logger_config import logger
 from sentry_config import setup_sentry
 from utils import (
-    RateLimitError,
-    RiotAPIError,
-    UserNotFoundError,
     check_new_riot_id,
     extract_match_info,
     get_puuid,
@@ -116,6 +113,14 @@ class MyBot(commands.Bot):
         if not self.background_update_task.is_running():
             self.background_update_task.start()
             logger.info("✅ Background update task started.")
+        for filename in os.listdir('./cogs'):
+            if filename.endswith('.py'):
+                try:
+                    cog_name = filename[:-3]
+                    await self.load_extension(f'cogs.{cog_name}')
+                    logger.info(f"✅ Loaded cog: {cog_name}")
+                except Exception as e:
+                    logger.error(f"❌ Failed to load cog {filename}: {e}")
 
     async def close(self):
         # runs when the bot shuts down.
@@ -361,35 +366,10 @@ async def on_ready():
         logger.warning("Database is not connected")
 
 
-# Global Error Handler
-
-
-@bot.event
-async def on_command_error(ctx, error):
-    if isinstance(error, commands.CommandNotFound):
-        await ctx.send("Sorry, I don't know that command")
-    elif isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(
-            f"Missing arguments. Usage: !{ctx.command} '{ctx.command.signature}'",
-        )
-    else:
-        actual_error = getattr(error, "original", error)
-        if isinstance(actual_error, UserNotFoundError):
-            await ctx.send(f"User Not Found: {actual_error}")
-        elif isinstance(actual_error, RateLimitError):
-            await ctx.send(f"Bot is busy, try again in a minute: {actual_error}")
-        elif isinstance(actual_error, RiotAPIError):
-            await ctx.send(f"Riot API issue: {actual_error}")
-        else:
-            logger.error(
-                f"❌ ERROR: {actual_error}",
-                exc_info=actual_error,
-            )
-            await ctx.send("An unexpected error occurred.")
-
-
 # Command Definitions
 
+
+@commands.cooldown(1, 5, commands.BucketType.user)
 @bot.command()
 async def track(ctx, *, riot_id):
     """Adds a user to the list of users tracked by the bot.
@@ -434,7 +414,7 @@ async def track(ctx, *, riot_id):
         await ctx.send("Database write failed.")
         raise e
 
-
+@commands.cooldown(1, 5, commands.BucketType.user)
 @bot.command()
 async def untrack(ctx, *, riot_id):
     """Removes a user from the list of users tracked by the bot.
@@ -481,7 +461,7 @@ async def untrack(ctx, *, riot_id):
         logger.exception(f"❌ ERROR: untracking: {e}")
         await ctx.send("Database update failed")
 
-
+@commands.cooldown(1, 10, commands.BucketType.user)
 @bot.command()
 async def update(ctx):
     """Manually updates ranked information of tracked users in this server.
@@ -529,8 +509,8 @@ async def update(ctx):
         view.message = message
     return await ctx.send("Ranked information has been updated")
 
-
-@bot.command(name="leaderboard", help="Prints the servers leaderboard of tracked users")
+@commands.cooldown(1, 5, commands.BucketType.user)
+@bot.command()
 async def leaderboard(ctx):
     """Prints the servers leaderboard.
 
@@ -590,7 +570,9 @@ async def leaderboard(ctx):
     await ctx.send(embed=embed)
 
 
-@bot.command()
+@commands.has_permissions(manage_guild=True)
+@commands.cooldown(1, 5, commands.BucketType.user)
+@bot.command(name="updateshere")
 async def set_update_channel(ctx):
     """Defaults automatic rank updates to post in this channel.
 
