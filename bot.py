@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from firebase_admin import firestore
 from google.cloud.firestore import FieldFilter
 
-from database import GUILD_CONFIG_COLLECTION, TRACKED_USERS_COLLECTION, database_startup
+from database import TRACKED_USERS_COLLECTION, database_startup
 from utils.constants import RANK_ORDER, TIER_ORDER
 from utils.helpers import extract_match_info, parse_riot_id
 from utils.logger_config import logger
@@ -292,30 +292,6 @@ async def leaderboard(ctx):
         )
     embed.description = description
     await ctx.send(embed=embed)
-
-
-@commands.has_permissions(manage_guild=True)
-@commands.bot_has_permissions(send_messages=True, embed_links=True)
-@commands.cooldown(1, 5, commands.BucketType.user)
-@bot.command(name="updateshere")
-async def set_update_channel(ctx):
-    """Defaults automatic rank updates to post in this channel.
-
-    Usage: !updateshere
-    Automatic rank updates will post in the channel where this bot is used.
-    If this command is not used, by default the bot will simply not post
-    live ranked updates.
-    """
-    if db is None:
-        return await ctx.send("Database Error")
-    doc_ref = db.collection(GUILD_CONFIG_COLLECTION).document(str(ctx.guild.id))
-    try:
-        doc_ref.set({"channel_id": ctx.channel.id}, merge=True)
-        await ctx.send("Rank updates will now be posted in this channel")
-    except Exception as e:
-        logger.exception(f"❌ ERROR: setting guild config: {e}")
-        await ctx.send("Database write failed.")
-        raise e
 
 # Helper Functions
 
