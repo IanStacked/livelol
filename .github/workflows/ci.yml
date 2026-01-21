@@ -81,8 +81,9 @@ jobs:
               "Sentry tracking initialized in production mode"
               "Firebase initialized successfully"
               "Persistent HTTP Session created"
-              "Background update task started"
               "Loaded cog: management"
+              "Background update task started"
+              "Loaded cog: background"
               "Bot connected as LiveLOL"
               "Starting background update loop"
             )
