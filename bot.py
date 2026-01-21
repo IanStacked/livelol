@@ -90,6 +90,7 @@ class MyHelp(commands.MinimalHelpCommand):
         return f"Use `{command_name} [command]` for more info on a command."
 
 class MyBot(commands.Bot):
+    """The main bot engine."""
     def __init__(self):
         intents = discord.Intents.default()
         intents.message_content = True
@@ -107,7 +108,7 @@ class MyBot(commands.Bot):
         self.session = None  # placeholder
 
     async def setup_hook(self):
-        # runs when the bot starts up.
+        """Bot bootup sequence."""
         self.session = aiohttp.ClientSession()
         logger.info("✅ Persistent HTTP Session created.")
         if not self.background_update_task.is_running():
@@ -123,7 +124,7 @@ class MyBot(commands.Bot):
                     logger.error(f"❌ Failed to load cog {filename}: {e}")
 
     async def close(self):
-        # runs when the bot shuts down.
+        """Bot bootdown sequence."""
         if self.session:
             await self.session.close()
             logger.info("🛑 HTTP Session closed.")
@@ -133,6 +134,7 @@ class MyBot(commands.Bot):
 
     @tasks.loop(minutes=10)
     async def background_update_task(self):
+        """Bot background update task."""
         try:
             logger.info("♻️ Starting background update loop")
             docs = db.collection(TRACKED_USERS_COLLECTION).stream()
