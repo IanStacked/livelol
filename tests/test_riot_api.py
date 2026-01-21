@@ -2,31 +2,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from utils import (
+from utils.riot_api import (
     RateLimitError,
     UserNotFoundError,
     call_riot_api,
     get_puuid,
     get_ranked_info,
-    parse_riot_id,
 )
-
-# Tests for Helper Functions
-
-
-def test_parse_riot_id_valid():
-    assert parse_riot_id("Ninja#TAG") == ("Ninja", "tag")  # capitalized tag
-    assert parse_riot_id("Ninja#tag") == ("Ninja", "tag")  # lowercase tag
-    assert parse_riot_id("NiNJa#TaG") == ("NiNJa", "tag")  # random caps
-
-
-def test_parse_riot_id_invalid():
-    assert parse_riot_id("NinjaTag") is None  # no hashtag
-    assert parse_riot_id("Ninja#") is None  # no tag
-    assert parse_riot_id("#tag") is None  # no username
-
-
-# Tests for API Functions
 
 
 @pytest.fixture

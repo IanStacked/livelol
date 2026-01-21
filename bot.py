@@ -11,16 +11,10 @@ from firebase_admin import firestore
 from google.cloud.firestore import FieldFilter
 
 from database import GUILD_CONFIG_COLLECTION, TRACKED_USERS_COLLECTION, database_startup
-from logger_config import logger
-from sentry_config import setup_sentry
-from utils import (
-    check_new_riot_id,
-    extract_match_info,
-    get_puuid,
-    get_ranked_info,
-    get_recent_match_info,
-    parse_riot_id,
-)
+from utils.helpers import check_new_riot_id, extract_match_info, parse_riot_id
+from utils.logger_config import logger
+from utils.riot_api import get_puuid, get_ranked_info, get_recent_match_info
+from utils.sentry_config import setup_sentry
 
 # API Keys
 

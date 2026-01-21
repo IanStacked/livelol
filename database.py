@@ -5,7 +5,7 @@ import os
 import firebase_admin
 from firebase_admin import credentials, firestore
 
-from logger_config import logger
+from utils.logger_config import logger
 
 # Configuration
 
