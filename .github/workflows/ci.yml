@@ -81,6 +81,7 @@ jobs:
               "Firebase initialized successfully"
               "Persistent HTTP Session created"
               "Background update task started"
+              "Loaded cog: management"
               "Bot connected as LiveLOL"
               "Starting background update loop"
             )
