@@ -61,6 +61,19 @@ if not db:
 BOT_PREFIX = "!"
 
 class MyHelp(commands.MinimalHelpCommand):
+    def __init__(self):
+        super().__init__(command_attrs={
+            "checks": [commands.bot_has_permissions(
+                send_messages=True,
+                embed_links=True,
+            ).predicate],
+            "cooldown": commands.CooldownMapping.from_cooldown(
+                1,
+                3,
+                commands.BucketType.user,
+            ),
+        })
+
     def add_bot_commands_formatting(self, commands, _heading):
         """This replaces the category heading with an 'Available Commands' label."""
         if commands:
@@ -372,6 +385,7 @@ async def on_ready():
 
 
 @commands.cooldown(1, 5, commands.BucketType.user)
+@commands.bot_has_permissions(send_messages=True, embed_links=True)
 @bot.command()
 async def track(ctx, *, riot_id):
     """Adds a user to the list of users tracked by the bot.
@@ -417,6 +431,7 @@ async def track(ctx, *, riot_id):
         raise e
 
 @commands.cooldown(1, 5, commands.BucketType.user)
+@commands.bot_has_permissions(send_messages=True, embed_links=True)
 @bot.command()
 async def untrack(ctx, *, riot_id):
     """Removes a user from the list of users tracked by the bot.
@@ -464,6 +479,7 @@ async def untrack(ctx, *, riot_id):
         await ctx.send("Database update failed")
 
 @commands.cooldown(1, 10, commands.BucketType.user)
+@commands.bot_has_permissions(send_messages=True, embed_links=True)
 @bot.command()
 async def update(ctx):
     """Manually updates ranked information of tracked users in this server.
@@ -512,6 +528,7 @@ async def update(ctx):
     return await ctx.send("Ranked information has been updated")
 
 @commands.cooldown(1, 5, commands.BucketType.user)
+@commands.bot_has_permissions(send_messages=True, embed_links=True)
 @bot.command()
 async def leaderboard(ctx):
     """Prints the servers leaderboard.
@@ -573,6 +590,7 @@ async def leaderboard(ctx):
 
 
 @commands.has_permissions(manage_guild=True)
+@commands.bot_has_permissions(send_messages=True, embed_links=True)
 @commands.cooldown(1, 5, commands.BucketType.user)
 @bot.command(name="updateshere")
 async def set_update_channel(ctx):
