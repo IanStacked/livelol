@@ -69,6 +69,7 @@ jobs:
             echo "ENV="production"" >> .env
             sudo docker stop my-bot || true
             sudo docker rm my-bot || true
+            sudo docker system prune -af
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/league-bot:latest
             sudo docker run -d \
               --restart always \
