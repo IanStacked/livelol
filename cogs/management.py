@@ -40,7 +40,7 @@ class Management(commands.Cog):
                 title = "Slow Down!",
                 description = (
                     f"You're using '{ctx.command}' too fast. \
-                    Try again in {error.retry_after[:3]}s."
+                    Try again in {round(error.retry_after, 2)}s."
                 ),
                 color=discord.Color.orange(),
             )
