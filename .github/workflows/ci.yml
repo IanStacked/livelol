@@ -85,6 +85,7 @@ jobs:
               "Loaded cog: admin"
               "Background update task started"
               "Loaded cog: background"
+              "Loaded cog: track"
               "Bot connected as LiveLOL"
               "Starting background update loop"
             )
