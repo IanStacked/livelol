@@ -9,6 +9,7 @@ from google.cloud.firestore import FieldFilter
 
 from database import TRACKED_USERS_COLLECTION, database_startup
 from utils.constants import RANK_ORDER, TIER_ORDER
+from utils.db_service import DatabaseService
 from utils.helpers import extract_match_info
 from utils.logger_config import logger
 from utils.riot_api import get_ranked_info, get_recent_match_info
@@ -52,6 +53,7 @@ class MyBot(commands.Bot):
             activity=activity,
         )
         self.session = None  # placeholder
+        self.db_service = DatabaseService(db=db)
         self.db = db
 
     async def setup_hook(self):
