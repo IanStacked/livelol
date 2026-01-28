@@ -3,8 +3,8 @@ import contextlib
 import discord
 from discord.ext import commands
 
+from utils.exceptions import RateLimitError, RiotAPIError, UserNotFoundError
 from utils.logger_config import logger
-from utils.riot_api import RateLimitError, RiotAPIError, UserNotFoundError
 
 
 class Management(commands.Cog):

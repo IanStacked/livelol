@@ -2,23 +2,8 @@ import asyncio
 
 import aiohttp
 
+from utils.exceptions import RateLimitError, RiotAPIError, UserNotFoundError
 from utils.logger_config import logger
-
-
-class RiotAPIError(Exception):
-    # General RIOTAPI Error
-    pass
-
-
-class UserNotFoundError(RiotAPIError):
-    # RIOT ID does not exist
-    pass
-
-
-class RateLimitError(RiotAPIError):
-    # Rate Limit hit
-    pass
-
 
 # Core API Function
 
