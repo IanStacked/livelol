@@ -113,22 +113,4 @@ Track the progress of everyone in your guild with a formatted, real-time leaderb
 | **Database** | Firebase Firestore | NoSQL structure allows for flexible "tracked user" schema and real-time updates. |
 | **Observability**| Sentry.io | Provides proactive error tracking and performance monitoring in the cloud. |
 
-## Getting Started
-1. Prerequisites
-    * Python 3.12+
-    * Docker & Docker Compose
-    * Riot Games API Key - Via Riot Developer Portal
-    * Firebase Credentials (Base 64 Encoded) - Via Google Firestore
-    * Discord Credentials - Via Discord Developer Portal
-    * Sentry Credentials - Via Sentry.io
-2. Clone the repository
-    * git clone [https://github.com/IanStacked/livelol.git](https://github.com/IanStacked/livelol.git)
-    * cd LiveLOL
-3. Install Dependencies
-    * uv sync
-4. Configure Environment
-    * Create a .env file with your credentials
-5. Run the Bot
-    * docker-compose up --build
-
 LiveLOL isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
