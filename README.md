@@ -113,4 +113,10 @@ Track the progress of everyone in your guild with a formatted, real-time leaderb
 | **Database** | Firebase Firestore | NoSQL structure allows for flexible "tracked user" schema and real-time updates. |
 | **Observability**| Sentry.io | Provides proactive error tracking and performance monitoring in the cloud. |
 
+### Software Licensing
+**Copyright (c) 2025-2026 IanStacked. All Rights Reserved.**
+
+This project is not open-source. See LICENSE.md for more details.
+
+### Riot Games Disclaimer
 LiveLOL isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
