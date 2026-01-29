@@ -71,5 +71,12 @@ class Management(commands.Cog):
         )
         return await ctx.send("An unexpected error occurred.")
 
+    @commands.Cog.listener()
+    async def on_guild_remove(self, guild: discord.Guild):
+        """Triggered when the bot is kicked from a server."""
+        await self.bot.db_service.remove_guild_config(guild)
+        await self.bot.db_service.untrack_all_users(guild)
+        logger.info(f"Bot removed from guild: {guild.name} ({guild.id})")
+
 async def setup(bot):
     await bot.add_cog(Management(bot))

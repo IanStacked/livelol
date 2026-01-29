@@ -1,6 +1,7 @@
 from firebase_admin import firestore
+from google.cloud.firestore import FieldFilter
 
-from database import TRACKED_USERS_COLLECTION
+from database import GUILD_CONFIG_COLLECTION, TRACKED_USERS_COLLECTION
 from utils.exceptions import DatabaseError
 from utils.logger_config import logger
 
@@ -13,7 +14,56 @@ class DatabaseService:
 
     # Guild operations
 
+    async def remove_guild_config(self, guild):
+        try:
+            doc_ref = (
+            self.db.collection(GUILD_CONFIG_COLLECTION).document(str(guild.id))
+            )
+            if doc_ref is None:
+                # File was never created
+                return
+            doc_ref.delete()
+        except Exception as e:
+            logger.exception(f"❌ ERROR: failed to delete guild config {guild.id}")
+            raise DatabaseError(
+                f"Database operation failed for guild {guild.id}: {e}",
+                ) from e
+
+
     # Player operations
+
+    async def untrack_all_users(self, guild):
+        try:
+            guild_id_str = str(guild.id)
+            docs = (
+                self.db.collection(TRACKED_USERS_COLLECTION)
+                .where(filter=FieldFilter("guild_ids", "array_contains", guild_id_str))
+                .stream()
+            )
+            doc_list = list(docs)
+            if not doc_list:
+                # No users tracked in server
+                return
+            for doc in doc_list:
+                doc_ref = doc.reference
+                data = doc.to_dict()
+                guild_list = data.get("guild_ids", [])
+                guild_list.remove(guild_id_str)
+                if not guild_list:
+                    # We were the only server left, delete the whole user file
+                    doc_ref.delete()
+                else:
+                    data["guild_ids"] = guild_list
+                    del data[f"server_info.{guild_id_str}"]
+                    doc_ref.set(data)
+        except Exception as e:
+            logger.exception(
+                f"❌ ERROR: failed to untrack all users from guild {guild.id} : {e}",
+            )
+            raise DatabaseError(
+                f"Database operation failed for guild {guild.id}: {e}",
+                ) from e
+
 
     async def track_user(self, ctx, riot_id: str, puuid: str, ranked_data):
         guild_id_str = str(ctx.guild.id)
