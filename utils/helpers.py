@@ -30,12 +30,17 @@ def extract_match_info(match_dto, puuid):
     return info
 
 def parse_riot_id(unclean_riot_id):
-    clean_riot_id = unclean_riot_id.strip()
-    if "#" not in clean_riot_id:
+    """Parses a Riot ID string and returns (username, tagline)."""
+    if "\n" in unclean_riot_id:
         return None
-    parts = clean_riot_id.split("#", 1)
-    username = parts[0]
-    tagline = parts[1]
+    if not unclean_riot_id or "#" not in unclean_riot_id:
+        return None
+    clean_riot_id = " ".join(unclean_riot_id.split())
+    parts = clean_riot_id.split("#")
+    if len(parts) != 2:
+        return None
+    username = parts[0].strip()
+    tagline = parts[1].strip()
     if not username or not tagline:
         return None
     # Taglines are case-insensitive. Lowercasing ensures that
