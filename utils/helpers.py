@@ -1,6 +1,24 @@
+from utils.constants import REGION_CLUSTERS
+
 # This file is for miscellaneous logic
 # If you notice a group of these functions having similar functionality,
 # make a separate file for them.
+
+def valid_region(parsed_region) -> bool:
+    """Checks if a parsed region is an accepted region."""
+    return parsed_region in REGION_CLUSTERS
+
+def parse_region(unclean_region):
+    """Parses an unclean_region string.
+
+    Returns clean_region.lower() since lowercase is enforced for regions.
+    """
+    if not unclean_region:
+        return None
+    if "\n" in unclean_region:
+        return None
+    clean_region = unclean_region.strip()
+    return clean_region.lower()
 
 def check_new_riot_id(match_info, puuid, riot_id) -> str:
     """Checks if a user has changed their riotid and returns new riotid if new."""
@@ -31,8 +49,6 @@ def extract_match_info(match_dto, puuid):
 
 def parse_riot_id(unclean_riot_id):
     """Parses a Riot ID string and returns (username, tagline)."""
-    if "\n" in unclean_riot_id:
-        return None
     if not unclean_riot_id or "#" not in unclean_riot_id:
         return None
     if "\n" in unclean_riot_id:
