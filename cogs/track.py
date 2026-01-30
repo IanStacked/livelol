@@ -1,8 +1,8 @@
 from discord.ext import commands
 
 from bot import RIOT_API_KEY
-from utils.helpers import parse_riot_id
-from utils.riot_api import get_puuid, get_ranked_info
+from utils.helpers import parse_region, parse_riot_id, valid_region
+from utils.riot_api import get_puuid, get_ranked_info, get_summoner_info
 
 
 class Track(commands.Cog):
@@ -14,30 +14,66 @@ class Track(commands.Cog):
     @commands.cooldown(1, 5, commands.BucketType.user)
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     @commands.command()
-    async def track(self, ctx, *, riot_id):
+    async def track(self, ctx, region, *, riot_id):
         """Adds a user to the list of users tracked by the bot.
 
-        Usage: !track <riotid>
-        Given a riotid, the bot will attempt to add the user to the bot's database,
-        "tracking" the user.
+        Usage: !track <region> <riotid>
+        Given a region and riotid, the bot will attempt to add the user to the bot's
+        database, "tracking" the user.
+        List of valid regions: br1, eun1, euw1, jp1, kr, la1, la2, na1, oc1, tr1,
+        ru, ph2, sg2, th2, tw2, vn2
         """
         if self.bot.db is None:
             return await ctx.send("Database Error")
-        parsed = parse_riot_id(riot_id)
-        if not parsed:
+        parsed_region = parse_region(region)
+        if not parsed_region:
             return await ctx.send(
-                "Invalid input, please ensure syntax is: !track username#tagline",
+                "Invalid input, please ensure syntax " \
+                "is: !track region username#tagline.",
             )
-        username = parsed[0]
-        tagline = parsed[1]
+        if not valid_region(parsed_region):
+            return await ctx.send(
+                "The region inputted is invalid. " \
+                "Please ensure syntax " \
+                "is: !track region username#tagline." \
+                "List of valid regions: br1, eun1, euw1, jp1, kr, la1, la2, na1, " \
+                "oc1, tr1, ru, ph2, sg2, th2, tw2, vn2 ",
+            )
+        parsed_riot_id = parse_riot_id(riot_id)
+        if not parsed_riot_id:
+            return await ctx.send(
+                "Invalid input, please ensure syntax " \
+                "is: !track region username#tagline.",
+            )
+        username = parsed_riot_id[0]
+        tagline = parsed_riot_id[1]
         riot_id = f"{username}#{tagline}"
         puuid = await get_puuid(self.bot.session, username, tagline, RIOT_API_KEY)
-        ranked_data = await get_ranked_info(self.bot.session, puuid, RIOT_API_KEY)
+        summoner_info = await get_summoner_info(
+            self.bot.session,
+            puuid,
+            parsed_region,
+            RIOT_API_KEY,
+        )
+        if not summoner_info:
+            return await ctx.send(
+                "This user does not belong to the region inputted. " \
+                "Please enter the users correct region. " \
+                "List of valid regions: br1, eun1, euw1, jp1, kr, la1, la2, na1, " \
+                "oc1, tr1, ru, ph2, sg2, th2, tw2, vn2 ",
+            )
+        ranked_data = await get_ranked_info(
+            self.bot.session,
+            puuid,
+            parsed_region,
+            RIOT_API_KEY,
+        )
         await self.bot.db_service.track_user(
             ctx,
             riot_id,
             puuid,
             ranked_data,
+            parsed_region,
         )
         await ctx.send(f"{riot_id} is now being tracked!")
 
