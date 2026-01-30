@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 
@@ -110,6 +111,11 @@ async def update(ctx):
     doc_list = list(docs)
     if not doc_list:
         return await ctx.send("No users tracked in this server. Use !track.")
+    await ctx.send(
+        "Manual ranked update process has begun. " \
+        "This can take some time. " \
+        "A confirmation message will be sent when the process is completed.",
+    )
     for doc in doc_list:
         old_tier = doc.get("tier")
         old_rank = doc.get("rank")
@@ -137,7 +143,9 @@ async def update(ctx):
         initial_embed = view.create_minimized_embed()
         message = await ctx.send(embed=initial_embed, view=view)
         view.message = message
-    return await ctx.send("Ranked information has been updated")
+        # This sleep ensures we stay behind API Rate limit curve.
+        await asyncio.sleep(1.5)
+    return await ctx.send("Ranked information has been updated.")
 
 @commands.cooldown(1, 5, commands.BucketType.user)
 @commands.bot_has_permissions(send_messages=True, embed_links=True)

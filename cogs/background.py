@@ -1,3 +1,5 @@
+import asyncio
+
 from discord.ext import commands, tasks
 
 from bot import RIOT_API_KEY
@@ -96,6 +98,8 @@ class Background(commands.Cog):
                         initial_embed = view.create_minimized_embed()
                         message = await channel.send(embed=initial_embed, view=view)
                         view.message = message
+                # This sleep ensures we stay behind API Rate limit curve.
+                await asyncio.sleep(1.5)
         except Exception as e:
             logger.exception(f"❌ ERROR: {e}")
 
