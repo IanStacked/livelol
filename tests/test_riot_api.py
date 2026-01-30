@@ -50,7 +50,7 @@ async def test_get_ranked_info_success(mock_session):
     ]
     mock_response = mock_session.get.return_value.__aenter__.return_value
     mock_response.json.return_value = test_data
-    result = await get_ranked_info(mock_session, "puuid", "KEY")
+    result = await get_ranked_info(mock_session, "puuid", "region", "KEY")
     assert result["tier"] == "GOLD"
     assert result["rank"] == "IV"
     assert result["LP"] == 20
@@ -62,7 +62,7 @@ async def test_get_ranked_info_unranked(mock_session):
     mock_response.json.return_value = (
         ""  # not None, as that is what is returned for an invalid puuid
     )
-    result = await get_ranked_info(mock_session, "puuid", "KEY")
+    result = await get_ranked_info(mock_session, "puuid", "region", "KEY")
     assert result["tier"] == "UNRANKED"
     assert result["rank"] == ""
     assert result["LP"] == 0
@@ -74,7 +74,7 @@ async def test_get_ranked_info_invalid_puuid(mock_session):
     mock_response.status = 404
     mock_response.json.return_value = None
     with pytest.raises(UserNotFoundError):
-        await get_ranked_info(mock_session, "puuid", "KEY")
+        await get_ranked_info(mock_session, "puuid", "region", "KEY")
 
 
 @pytest.mark.asyncio

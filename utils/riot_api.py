@@ -76,9 +76,8 @@ async def get_puuid(session, game_name, tag_line, riot_api_key):
     return data.get("puuid")
 
 
-async def get_ranked_info(session, puuid, riot_api_key):
-    # currently this api call will only work for NA users
-    api_url = f"https://na1.api.riotgames.com/lol/league/v4/entries/by-puuid/{puuid}"
+async def get_ranked_info(session, puuid, region, riot_api_key):
+    api_url = f"https://{region}.api.riotgames.com/lol/league/v4/entries/by-puuid/{puuid}"
     headers = {
         "X-Riot-Token": riot_api_key,
         "Accept": "application/json",
