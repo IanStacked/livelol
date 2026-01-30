@@ -35,6 +35,8 @@ def parse_riot_id(unclean_riot_id):
         return None
     if not unclean_riot_id or "#" not in unclean_riot_id:
         return None
+    if "\n" in unclean_riot_id:
+        return None
     clean_riot_id = " ".join(unclean_riot_id.split())
     parts = clean_riot_id.split("#")
     if len(parts) != 2:
