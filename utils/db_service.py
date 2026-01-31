@@ -65,13 +65,14 @@ class DatabaseService:
                 ) from e
 
 
-    async def track_user(self, ctx, riot_id: str, puuid: str, ranked_data):
+    async def track_user(self, ctx, riot_id: str, puuid: str, ranked_data, region):
         guild_id_str = str(ctx.guild.id)
         doc_id = puuid
         doc_ref = self.db.collection(TRACKED_USERS_COLLECTION).document(doc_id)
         payload = {
             "riot_id": riot_id,
             "puuid": puuid,
+            "region": region,
             "tier": f"{ranked_data.get('tier')}",
             "rank": f"{ranked_data.get('rank')}",
             "LP": ranked_data.get("LP"),

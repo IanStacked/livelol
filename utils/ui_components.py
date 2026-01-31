@@ -52,7 +52,7 @@ class MyHelp(commands.MinimalHelpCommand):
 
 class MatchDetailsView(discord.ui.View):
     """A view that toggles between a simple rank update and a full match summary."""
-    def __init__(self, match_data, ranked_data, riot_id, puuid, timeout=259200):
+    def __init__(self, match_data, ranked_data, riot_id, puuid, region, timeout=259200):
         super().__init__(timeout=timeout)
         self.match_data = match_data
         self.ranked_data = ranked_data
@@ -60,6 +60,7 @@ class MatchDetailsView(discord.ui.View):
         self.is_expanded = False
         self.message = None
         self.puuid = puuid
+        self.region = region
         self.minimized_embed = self.create_minimized_embed()
         self.maximized_embed = self.create_maximized_embed()
         self.create_profile_buttons()
@@ -102,7 +103,7 @@ class MatchDetailsView(discord.ui.View):
             f" ({self.match_data.get('target_kda')})"
         )
         embed = discord.Embed(
-            title="Rank Update",
+            title=f"Rank Update from {self.region}",
             description=description,
             color=color,
         )

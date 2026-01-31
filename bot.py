@@ -177,6 +177,7 @@ async def leaderboard(ctx):
                 "tier": data.get("tier", "UNRANKED"),
                 "rank": data.get("rank", ""),
                 "lp": data.get("LP", 0),
+                "region": data.get("region"),
             },
         )
     leaderboard_data.sort(
@@ -202,7 +203,7 @@ async def leaderboard(ctx):
         else:
             rank_prefix = f"**{i}.**"
         description += (
-            f"{rank_prefix} **{player['name']}** - "
+            f"{rank_prefix} ({player['region']}) **{player['name']}** - "
             f"{player['tier']} {player['rank']} ({player['lp']} LP)\n"
         )
     embed.description = description
