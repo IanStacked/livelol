@@ -103,7 +103,7 @@ class MatchDetailsView(discord.ui.View):
             f" ({self.match_data.get('target_kda')})"
         )
         embed = discord.Embed(
-            title=f"Rank Update from {self.region}",
+            title=f"Rank Update ({self.region})",
             description=description,
             color=color,
         )
