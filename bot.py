@@ -121,7 +121,8 @@ async def update(ctx):
         old_rank = doc.get("rank")
         old_lp = doc.get("LP")
         puuid = doc.get("puuid")
-        data = await get_ranked_info(bot.session, puuid, RIOT_API_KEY)
+        region = doc.get("region")
+        data = await get_ranked_info(bot.session, puuid, region, RIOT_API_KEY)
         new_tier = data.get("tier")
         new_rank = data.get("rank")
         new_lp = data.get("LP")
@@ -139,7 +140,13 @@ async def update(ctx):
             "new_rank": new_rank,
             "new_lp": new_lp,
         }
-        view = MatchDetailsView(processed_match_info, ranked_data, riot_id, puuid)
+        view = MatchDetailsView(
+            processed_match_info,
+            ranked_data,
+            riot_id,
+            puuid,
+            region,
+        )
         initial_embed = view.create_minimized_embed()
         message = await ctx.send(embed=initial_embed, view=view)
         view.message = message
