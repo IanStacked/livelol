@@ -3,7 +3,7 @@ import contextlib
 import discord
 from discord.ext import commands
 
-from utils.exceptions import RateLimitError, RiotAPIError, UserNotFoundError
+from utils.exceptions import LiveLOLError
 from utils.logger_config import logger
 
 
@@ -51,20 +51,13 @@ class Management(commands.Cog):
                 return await ctx.author.send(
                     f"I'm missing permissions (**{perms}**) in **{ctx.guild.name}**!",
                 )
-        if isinstance(unwrapped_error, UserNotFoundError):
-            return await ctx.send(f"User Not Found: {unwrapped_error}")
-        if isinstance(unwrapped_error, RateLimitError):
-            return await ctx.send(
-                f"Bot is busy, try again in a minute: {unwrapped_error}",
-                delete_after=10,
-            )
-        if isinstance(unwrapped_error, RiotAPIError):
-            return await ctx.send(f"Riot API issue: {unwrapped_error}")
         if isinstance(unwrapped_error, commands.MissingPermissions):
             return await ctx.send(
                 "You don't have permission to use this command.",
                 delete_after=10,
             )
+        if isinstance(unwrapped_error, LiveLOLError):
+            return await ctx.send(f"{unwrapped_error}")
         logger.error(
             f"❌ ERROR: {unwrapped_error}",
             exc_info=unwrapped_error,
