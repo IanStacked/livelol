@@ -28,6 +28,13 @@ class RateLimitError(RiotAPIError):
         self.message = f"{prefix} {detail}"
         super().__init__(self.message)
 
+class MatchNotFoundError(RiotAPIError):
+    """Raised when a player has no recent match history for the specified queue."""
+    def __init__(self, detail: str = "No recent matches found."):
+        prefix = "🎮 **Match Error:**"
+        self.message = f"{prefix} {detail}"
+        super().__init__(self.message)
+
 class DatabaseError(LiveLOLError):
     """Base exception for all database related errors."""
     def __init__(self, detail: str = "Failed to update database records."):
