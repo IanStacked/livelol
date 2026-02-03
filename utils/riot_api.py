@@ -65,7 +65,7 @@ async def get_recent_match_info(session, puuid, cluster, riot_api_key):
     match_id = await call_riot_api(session, api_url, headers)
     if match_id is None:
         raise MatchNotFoundError()
-    api_url = f"https://americas.api.riotgames.com/lol/match/v5/matches/{match_id[0]}"
+    api_url = f"https://{cluster}.api.riotgames.com/lol/match/v5/matches/{match_id[0]}"
     match_info = await call_riot_api(session, api_url, headers)
     if match_info is None:
         raise MatchNotFoundError()
