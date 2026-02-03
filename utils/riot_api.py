@@ -36,7 +36,7 @@ async def call_riot_api(session, url, headers, retries=3):
                         # This response is from somewhere else (cloudflare, etc).
                         # We should skip this response and move on
                         logger.warning(
-                            "Shard rejected request. " \
+                            "⚠️ Shard rejected request. " \
                             f"Ray: {cf_ray} " \
                             f"Edge: {edge_trace} ",
                         )
