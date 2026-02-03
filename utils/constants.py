@@ -48,3 +48,15 @@ OPGG_REGIONS = {
     'tw2': 'tw',
     'vn2': 'vn',
 }
+DEEPLOL_REGIONS = {
+    'na1': 'na',
+    'euw1': 'euw',
+    'eun1': 'eun',
+    'kr': 'kr',
+    'jp1': 'jp',
+    'br1': 'br',
+    'tr1': 'tr',
+    'tw2': 'tw',
+    'vn2': 'vn',
+    'sg2': 'sea',
+}
