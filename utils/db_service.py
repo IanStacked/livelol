@@ -14,6 +14,12 @@ class DatabaseService:
 
     # Guild operations
 
+    async def set_guild_config(self, ctx):
+        doc_ref = (
+            self.bot.db.collection(GUILD_CONFIG_COLLECTION).document(str(ctx.guild.id))
+        )
+        doc_ref.set({"channel_id": ctx.channel.id}, merge=True)
+
     async def remove_guild_config(self, guild):
         try:
             doc_ref = (

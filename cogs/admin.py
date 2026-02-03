@@ -1,8 +1,5 @@
 from discord.ext import commands
 
-from database import GUILD_CONFIG_COLLECTION
-from utils.logger_config import logger
-
 
 class Admin(commands.Cog):
     """Handles bot administration."""
@@ -22,18 +19,8 @@ class Admin(commands.Cog):
         If this command is not used, by default the bot will simply not post
         live ranked updates.
         """
-        if self.bot.db is None:
-            return await ctx.send("Database Error")
-        doc_ref = (
-            self.bot.db.collection(GUILD_CONFIG_COLLECTION).document(str(ctx.guild.id))
-        )
-        try:
-            doc_ref.set({"channel_id": ctx.channel.id}, merge=True)
-            await ctx.send("Rank updates will now be posted in this channel")
-        except Exception as e:
-            logger.exception(f"❌ ERROR: setting guild config: {e}")
-            await ctx.send("Database write failed.")
-            raise e
+        self.bot.db_service.set_guild_config(ctx)
+        await ctx.send("Rank updates will now be posted in this channel")
 
 async def setup(bot):
     await bot.add_cog(Admin(bot))
