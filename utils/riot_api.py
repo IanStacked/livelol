@@ -50,8 +50,8 @@ async def get_summoner_info(session, puuid, region, riot_api_key):
     summoner_info = await call_riot_api(session, api_url, headers)
     return summoner_info
 
-async def get_recent_match_info(session, puuid, riot_api_key):
-    api_url = f"https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids?queue=420&count=1"
+async def get_recent_match_info(session, puuid, cluster, riot_api_key):
+    api_url = f"https://{cluster}.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids?queue=420&count=1"
     headers = {
         "X-Riot-Token": riot_api_key,
         "Accept": "application/json",
