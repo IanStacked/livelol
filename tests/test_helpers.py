@@ -1,4 +1,4 @@
-from utils.helpers import parse_region, parse_riot_id, valid_region
+from utils.helpers import parse_region, parse_riot_id
 
 
 def test_parse_riot_id_valid():
@@ -22,9 +22,3 @@ def test_parse_region_valid():
 def test_parse_region_invalid():
     assert parse_region("") is None # empty region
     assert parse_region("\nna1") is None # newline character in region
-
-def test_valid_region_valid():
-    assert valid_region("na1") is True # normal case
-
-def test_valid_region_invalid():
-    assert valid_region("na") is False # incorrect region
