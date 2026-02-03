@@ -2,7 +2,12 @@ import asyncio
 
 import aiohttp
 
-from utils.exceptions import RateLimitError, RiotAPIError, UserNotFoundError
+from utils.exceptions import (
+    MatchNotFoundError,
+    RateLimitError,
+    RiotAPIError,
+    UserNotFoundError,
+)
 from utils.logger_config import logger
 
 # Core API Function
@@ -58,8 +63,12 @@ async def get_recent_match_info(session, puuid, cluster, riot_api_key):
         "User-Agent": "LeagueHelperApp/1.0",
     }
     match_id = await call_riot_api(session, api_url, headers)
+    if match_id is None:
+        raise MatchNotFoundError()
     api_url = f"https://americas.api.riotgames.com/lol/match/v5/matches/{match_id[0]}"
     match_info = await call_riot_api(session, api_url, headers)
+    if match_info is None:
+        raise MatchNotFoundError()
     return match_info
 
 
