@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 
 from utils.constants import RANK_ORDER, TIER_ORDER
-from utils.helpers import deeplol_link, opgg_link
+from utils.links import deeplol_link, opgg_link
 from utils.logger_config import logger
 
 
