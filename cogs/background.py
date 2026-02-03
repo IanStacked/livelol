@@ -4,6 +4,7 @@ from discord.ext import commands, tasks
 
 from bot import RIOT_API_KEY
 from database import GUILD_CONFIG_COLLECTION, TRACKED_USERS_COLLECTION
+from utils.constants import REGION_CLUSTERS
 from utils.helpers import check_new_riot_id, extract_match_info
 from utils.logger_config import logger
 from utils.riot_api import get_ranked_info, get_recent_match_info
@@ -65,9 +66,11 @@ class Background(commands.Cog):
                         )
                     if channel:
                         riot_id = doc.get("riot_id")
+                        cluster = REGION_CLUSTERS.get(region)
                         match_info = await get_recent_match_info(
                             self.bot.session,
                             puuid,
+                            cluster,
                             RIOT_API_KEY,
                         )
                         processed_match_info = extract_match_info(match_info, puuid)
