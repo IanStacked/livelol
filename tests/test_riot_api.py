@@ -81,7 +81,10 @@ async def test_get_ranked_info_invalid_puuid(mock_session):
 async def test_api_rate_limit_retry(mock_session):
     response_429 = AsyncMock()
     response_429.status = 429
-    response_429.headers = {"Retry-After": "1"}
+    response_429.headers = {
+        "Retry-After": "1",
+        "X-Rate-Limit-Type": "non-empty",
+    }
     response_200 = AsyncMock()
     response_200.status = 200
     response_200.json.return_value = {"key": "value"}
@@ -98,7 +101,10 @@ async def test_api_rate_limit_retry(mock_session):
 async def test_api_rate_limit_max_retries_exceeded(mock_session):
     response_429 = AsyncMock()
     response_429.status = 429
-    response_429.headers = {"Retry-After": "1"}
+    response_429.headers = {
+        "Retry-After": "1",
+        "X-Rate-Limit-Type": "non-empty",
+    }
     mock_context = mock_session.get.return_value
     mock_context.__aenter__.side_effect = [
         response_429,
