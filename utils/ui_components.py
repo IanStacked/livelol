@@ -5,6 +5,7 @@ import discord
 from discord.ext import commands
 
 from utils.constants import RANK_ORDER, TIER_ORDER
+from utils.helpers import opgg_link
 from utils.logger_config import logger
 
 
@@ -69,15 +70,16 @@ class MatchDetailsView(discord.ui.View):
         try:
             link_riot_id = self.riot_id.replace("#","-")
             encoded_riot_id = urllib.parse.quote(link_riot_id)
-            opgg_url = f"https://op.gg/lol/summoners/na/{encoded_riot_id}"
+            opgg_url = opgg_link(encoded_riot_id, self.region)
             deeplol_url = f"https://www.deeplol.gg/summoner/na/{encoded_riot_id}"
-            self.add_item(
-                discord.ui.Button(
-                    label="OP.GG",
-                    url=opgg_url,
-                    style=discord.ButtonStyle.link,
-                ),
-            )
+            if(opgg_url is not None):
+                self.add_item(
+                    discord.ui.Button(
+                        label="OP.GG",
+                        url=opgg_url,
+                        style=discord.ButtonStyle.link,
+                    ),
+                )
             self.add_item(
                 discord.ui.Button(
                     label="DeepLol",
