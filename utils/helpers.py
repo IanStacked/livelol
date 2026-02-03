@@ -1,8 +1,15 @@
-from utils.constants import REGION_CLUSTERS
+from utils.constants import OPGG_REGIONS, REGION_CLUSTERS
 
 # This file is for miscellaneous logic
 # If you notice a group of these functions having similar functionality,
 # make a separate file for them.
+
+def opgg_link(encoded_riot_id, region):
+    """Attempts to form a valid op.gg link."""
+    if(region not in OPGG_REGIONS):
+        return None
+    opgg_region = OPGG_REGIONS.get(region)
+    return f"https://op.gg/lol/summoners/{opgg_region}/{encoded_riot_id}"
 
 def valid_region(parsed_region) -> bool:
     """Checks if a parsed region is an accepted region."""
