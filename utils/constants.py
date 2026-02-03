@@ -31,3 +31,20 @@ REGION_CLUSTERS = {
     'tw2': 'sea',
     'vn2': 'sea',
 }
+OPGG_REGIONS = {
+    'na1': 'na',
+    'me1': 'me',
+    'euw1': 'euw',
+    'eun1': 'eune',
+    'oc1': 'oce',
+    'kr': 'kr',
+    'jp1': 'jp',
+    'br1': 'br',
+    'la2': 'las',
+    'la1': 'lan',
+    'ru': 'ru',
+    'tr1': 'tr',
+    'sg2': 'sea',
+    'tw2': 'tw',
+    'vn2': 'vn',
+}
