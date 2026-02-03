@@ -86,8 +86,6 @@ bot.help_command = MyHelp()
 async def on_ready():
     # called when bot initially connects
     logger.info(f"✅ Bot connected as {bot.user.name} (ID: {bot.user.id})")
-    if db is None:
-        logger.warning("Database is not connected")
 
 # Command Definitions
 
@@ -100,8 +98,6 @@ async def update(ctx):
     Usage: !update
     Triggers ranked updates for all users in the server where this command is called
     """
-    if db is None:
-        return await ctx.send("Database Error")
     guild_id_str = str(ctx.guild.id)
     docs = (
         db.collection(TRACKED_USERS_COLLECTION)
@@ -169,8 +165,6 @@ async def leaderboard(ctx):
     Usage: !leaderboard
     Prints out the tracked users in order of rank from highest to lowest
     """
-    if db is None:
-        return await ctx.send("Database Error")
     guild_id_str = str(ctx.guild.id)
     # DB handling
     docs = (
