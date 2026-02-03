@@ -28,6 +28,12 @@ class RateLimitError(RiotAPIError):
         self.message = f"{prefix} {detail}"
         super().__init__(self.message)
 
+class ServiceUnavailableError(RiotAPIError):
+    """Raised when Cloudflare or a specific Shard is rejecting us."""
+    def __init__(self, detail: str = "Shard is unresponsive."):
+        prefix = "☁️ **Service Issue:**"
+        self.message = f"{prefix} {detail}"
+        super().__init__(self.message)
 class MatchNotFoundError(RiotAPIError):
     """Raised when a player has no recent match history for the specified queue."""
     def __init__(self, detail: str = "No recent matches found."):
