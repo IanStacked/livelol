@@ -1,12 +1,6 @@
-from utils.constants import REGION_CLUSTERS
-
 # This file is for miscellaneous logic
 # If you notice a group of these functions having similar functionality,
 # make a separate file for them.
-
-def valid_region(parsed_region) -> bool:
-    """Checks if a parsed region is an accepted region."""
-    return parsed_region in REGION_CLUSTERS
 
 def parse_region(unclean_region):
     """Parses an unclean_region string.

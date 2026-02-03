@@ -1,8 +1,9 @@
 from discord.ext import commands
 
 from bot import RIOT_API_KEY
+from utils.constants import REGION_CLUSTERS
 from utils.exceptions import DatabaseError, UserNotFoundError
-from utils.helpers import parse_region, parse_riot_id, valid_region
+from utils.helpers import parse_region, parse_riot_id
 from utils.logger_config import logger
 from utils.riot_api import get_puuid, get_ranked_info, get_summoner_info
 
@@ -49,7 +50,7 @@ class Track(commands.Cog):
                 "Invalid input, please ensure syntax " \
                 "is: !track region username#tagline.",
             )
-        if not valid_region(parsed_region):
+        if parsed_region not in REGION_CLUSTERS:
             return await ctx.send(
                 "The region inputted is invalid. " \
                 "Please ensure syntax " \
