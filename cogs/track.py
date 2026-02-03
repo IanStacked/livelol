@@ -22,8 +22,24 @@ class Track(commands.Cog):
         Usage: !track <region> <riotid>
         Given a region and riotid, the bot will attempt to add the user to the bot's
         database, "tracking" the user.
-        List of valid regions: br1, eun1, euw1, jp1, kr, la1, la2, na1, oc1, tr1,
-        ru, ph2, sg2, th2, tw2, vn2
+        List of valid region tags and their respective geographic area names:
+        na1 - North America
+        euw1 - Europe West
+        eun1 - Europe Nordic & East
+        me1 - Middle East
+        kr - Korea
+        jp1 - Japan
+        br1 - Brazil
+        la1 - Latin America North (LAN)
+        la2 - Latin America South (LAS)
+        oc1 - Oceania (OCE)
+        tr1 - Turkey
+        ru - Russia
+        ph2 - Philippines
+        sg2 - Singapore, Malaysia, & Indonesia
+        th2 - Thailand
+        tw2 - Taiwan, Hong Kong, & Macao
+        vn2 - Vietnam
         """
         if self.bot.db is None:
             return await ctx.send("Database Error")
@@ -39,7 +55,8 @@ class Track(commands.Cog):
                 "Please ensure syntax " \
                 "is: !track region username#tagline. " \
                 "List of valid regions: br1, eun1, euw1, jp1, kr, la1, la2, na1, " \
-                "oc1, tr1, ru, ph2, sg2, th2, tw2, vn2 ",
+                "oc1, tr1, ru, ph2, sg2, th2, tw2, vn2, me1 " \
+                "For more detailed information, use !help track.",
             )
         parsed_riot_id = parse_riot_id(riot_id)
         if not parsed_riot_id:
@@ -64,7 +81,8 @@ class Track(commands.Cog):
                     f"but they do not have a profile on {parsed_region}. " \
                     "Please enter the users correct region. " \
                     "List of valid regions: br1, eun1, euw1, jp1, kr, la1, la2, na1, " \
-                    "oc1, tr1, ru, ph2, sg2, th2, tw2, vn2 ",
+                    "oc1, tr1, ru, ph2, sg2, th2, tw2, vn2, me1 " \
+                    "For more detailed information, use !help track.",
                 )
             ranked_data = await get_ranked_info(
                 self.bot.session,
