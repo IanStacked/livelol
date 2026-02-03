@@ -6,6 +6,7 @@ from utils.exceptions import (
     MatchNotFoundError,
     RateLimitError,
     RiotAPIError,
+    ServiceUnavailableError,
     UserNotFoundError,
 )
 from utils.logger_config import logger
@@ -20,12 +21,26 @@ async def call_riot_api(session, url, headers, retries=3):
                 if response.status == 200:
                     return await response.json()
                 elif response.status == 429:
+                    limit_type = response.headers.get("X-Rate-Limit-Type")
                     retry_after = int(response.headers.get("Retry-After", 1))
-                    logger.warning(
-                        f"⚠️ Rate Limit Hit! Sleeping for {retry_after} seconds...",
-                    )
-                    await asyncio.sleep(retry_after)
-                    continue
+                    cf_ray = response.headers.get("CF-RAY", "Unknown")
+                    edge_trace = response.headers.get("X-Riot-Edge-Trace-Id", "N/A")
+                    if limit_type:
+                        # This means the response is from Riot, we must wait.
+                        logger.warning(
+                            f"⚠️ Rate Limit Hit! Sleeping for {retry_after} seconds...",
+                        )
+                        await asyncio.sleep(retry_after)
+                        continue
+                    else:
+                        # This response is from somewhere else (cloudflare, etc).
+                        # We should skip this response and move on
+                        logger.warning(
+                            "Shard rejected request. " /
+                            f"Ray: {cf_ray} " /
+                            f"Edge: {edge_trace} ",
+                        )
+                        raise ServiceUnavailableError()
                 # other errors - dont retry
                 elif response.status == 404:
                     return None
@@ -35,7 +50,7 @@ async def call_riot_api(session, url, headers, retries=3):
                     raise RiotAPIError(f"Riot API Error {response.status}: {url}")
         except aiohttp.ClientError as e:
             raise RiotAPIError("Network Connection Failed") from e
-    raise RateLimitError("Max retries exceeded for Riot API.")
+    raise RateLimitError(f"Max retries exceeded for Riot API: {response}")
 
 
 # Specific Data Fetchers
