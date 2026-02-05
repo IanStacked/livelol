@@ -14,7 +14,7 @@ from utils.logger_config import logger
 # Core API Function
 
 
-async def call_riot_api(session, url, headers, retries=3):
+async def call_riot_api(session, url, headers, retries=3, response_origin="americas"):
     for _attempt in range(retries):
         try:
             async with session.get(url, headers=headers) as response:
@@ -23,8 +23,6 @@ async def call_riot_api(session, url, headers, retries=3):
                 elif response.status == 429:
                     limit_type = response.headers.get("X-Rate-Limit-Type")
                     retry_after = int(response.headers.get("Retry-After", 1))
-                    cf_ray = response.headers.get("CF-RAY", "Unknown")
-                    edge_trace = response.headers.get("X-Riot-Edge-Trace-Id", "N/A")
                     if limit_type:
                         # This means the response is from Riot, we must wait.
                         logger.warning(
@@ -36,9 +34,7 @@ async def call_riot_api(session, url, headers, retries=3):
                         # This response is from somewhere else (cloudflare, etc).
                         # We should skip this response and move on
                         logger.warning(
-                            "⚠️ Shard rejected request. " \
-                            f"Ray: {cf_ray} " \
-                            f"Edge: {edge_trace} ",
+                            f"⚠️ (429) ({response_origin}) Shard rejected request.",
                         )
                         raise ServiceUnavailableError()
                 # other errors - dont retry
@@ -46,6 +42,11 @@ async def call_riot_api(session, url, headers, retries=3):
                     return None
                 elif response.status == 403:
                     raise RiotAPIError("Riot API Key is invalid or expired.")
+                elif response.status == 503:
+                    logger.warning(
+                        f"⚠️ (503) ({response_origin}) Shard rejected request.",
+                    )
+                    raise ServiceUnavailableError()
                 else:
                     raise RiotAPIError(f"Riot API Error {response.status}: {url}")
         except aiohttp.ClientError as e:
