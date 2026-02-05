@@ -68,7 +68,7 @@ async def get_summoner_info(session, puuid, region, riot_api_key):
         "Accept": "application/json",
         "User-Agent": "LeagueHelperApp/1.0",
     }
-    summoner_info = await call_riot_api(session, api_url, headers)
+    summoner_info = await call_riot_api(session, api_url, headers, region)
     return summoner_info
 
 async def get_recent_match_info(session, puuid, cluster, riot_api_key):
@@ -78,11 +78,11 @@ async def get_recent_match_info(session, puuid, cluster, riot_api_key):
         "Accept": "application/json",
         "User-Agent": "LeagueHelperApp/1.0",
     }
-    match_id = await call_riot_api(session, api_url, headers)
+    match_id = await call_riot_api(session, api_url, headers, cluster)
     if match_id is None:
         raise MatchNotFoundError()
     api_url = f"https://{cluster}.api.riotgames.com/lol/match/v5/matches/{match_id[0]}"
-    match_info = await call_riot_api(session, api_url, headers)
+    match_info = await call_riot_api(session, api_url, headers, cluster)
     if match_info is None:
         raise MatchNotFoundError()
     return match_info
@@ -108,7 +108,7 @@ async def get_ranked_info(session, puuid, region, riot_api_key):
         "Accept": "application/json",
         "User-Agent": "LeagueHelperApp/1.0",
     }
-    data = await call_riot_api(session, api_url, headers)
+    data = await call_riot_api(session, api_url, headers, region)
     if data is None:
         raise UserNotFoundError(f"User with puuid: {puuid} not found.")
     soloq = None
