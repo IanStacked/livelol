@@ -14,7 +14,7 @@ from utils.logger_config import logger
 # Core API Function
 
 
-async def call_riot_api(session, url, headers, retries=3, response_origin="americas"):
+async def call_riot_api(session, url, headers, response_origin="americas", retries=3):
     for _attempt in range(retries):
         try:
             async with session.get(url, headers=headers) as response:
