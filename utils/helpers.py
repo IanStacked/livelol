@@ -2,6 +2,25 @@
 # If you notice a group of these functions having similar functionality,
 # make a separate file for them.
 
+def parse_rank_info(old_data, new_data):
+    return {
+        "old_tier": old_data.get("tier"),
+        "old_rank": old_data.get("rank"),
+        "old_lp": old_data.get("LP"),
+        "new_tier": new_data.get("tier"),
+        "new_rank": new_data.get("rank"),
+        "new_lp": new_data.get("LP"),
+    }
+
+def rank_difference(ranked_info) -> bool:
+    old_tier = ranked_info.get("tier")
+    old_rank = ranked_info.get("rank")
+    old_lp = ranked_info.get("LP")
+    new_tier = ranked_info.get("tier")
+    new_rank = ranked_info.get("rank")
+    new_lp = ranked_info.get("LP")
+    return not (old_tier == new_tier and old_rank == new_rank and old_lp == new_lp)
+
 def parse_region(unclean_region):
     """Parses an unclean_region string.
 
