@@ -103,6 +103,10 @@ Track the progress of everyone in your guild with a formatted, real-time leaderb
     * Github Actions workflow for CI/CD
     * Unit Tests
     * Linting via Ruff enforced before every push
+5. Region Handling
+    * Global shard support for all Riot regional platforms
+    * Fail-Fast architecture for regional shard outages
+    * Infrastructure aware rate limiting that reduces unnecessary API calls
 
 ## Tech Stack & Design Decisions
 | Category | Tool | Why this choice? |
