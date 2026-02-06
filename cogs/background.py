@@ -71,7 +71,7 @@ class Background(commands.Cog):
                     puuid,
                     riot_id,
                 )
-                if(new_riot_id != ""):
+                if new_riot_id:
                     await self.bot.db_service.update_riot_id(puuid, new_riot_id)
                     riot_id = new_riot_id
                     logger.info(f"📝 Name Change Detected: {riot_id} -> {new_riot_id}")
