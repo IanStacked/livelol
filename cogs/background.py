@@ -56,29 +56,29 @@ class Background(commands.Cog):
                 if not rank_difference(ranked_data):
                     continue
                 doc.reference.update(data)
+                try:
+                    match_info = await get_recent_match_info(
+                        self.bot.session,
+                        puuid,
+                        cluster,
+                        RIOT_API_KEY,
+                    )
+                except ServiceUnavailableError:
+                    continue
+                processed_match_info = extract_match_info(match_info, puuid)
+                new_riot_id = check_new_riot_id(
+                    processed_match_info,
+                    puuid,
+                    riot_id,
+                )
+                if(new_riot_id != ""):
+                    await self.bot.db_service.update_riot_id(puuid, new_riot_id)
+                    riot_id = new_riot_id
                 for guild in guild_ids:
-                    channel_id = self.bot.db_service.get_guild_config(guild)
+                    channel_id = await self.bot.db_service.get_guild_config(guild)
                     if channel_id is None:
                         continue
                     channel = self.bot.get_channel(channel_id)
-                    try:
-                        match_info = await get_recent_match_info(
-                            self.bot.session,
-                            puuid,
-                            cluster,
-                            RIOT_API_KEY,
-                        )
-                    except ServiceUnavailableError:
-                        continue
-                    processed_match_info = extract_match_info(match_info, puuid)
-                    new_riot_id = check_new_riot_id(
-                        processed_match_info,
-                        puuid,
-                        riot_id,
-                    )
-                    if(new_riot_id != ""):
-                        self.bot.db_service.update_riot_id(puuid, new_riot_id)
-                        riot_id = new_riot_id
                     view = MatchDetailsView(
                         processed_match_info,
                         ranked_data,
