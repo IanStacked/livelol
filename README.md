@@ -69,7 +69,7 @@ graph LR
 ```
 
 ## Preview
-The bot provides toggleable match summaries. Users can view a high-level rank update or expand the view to see the full role-sorted team breakdown.
+The bot provides toggleable match summaries. Users can view a high-level rank update or expand the view to see the full role-sorted team breakdown. Includes region information.
 <table border="0">
   <tr>
     <td valign="top" width="45%">
