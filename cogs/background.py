@@ -74,6 +74,7 @@ class Background(commands.Cog):
                 if(new_riot_id != ""):
                     await self.bot.db_service.update_riot_id(puuid, new_riot_id)
                     riot_id = new_riot_id
+                    logger.info(f"📝 Name Change Detected: {riot_id} -> {new_riot_id}")
                 for guild in guild_ids:
                     channel_id = await self.bot.db_service.get_guild_config(guild)
                     if channel_id is None:
