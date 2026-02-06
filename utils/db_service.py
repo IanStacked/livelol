@@ -14,6 +14,32 @@ class DatabaseService:
 
     # Guild operations
 
+    async def update_riot_id(self, puuid, new_riot_id):
+        doc_id = puuid
+        doc_ref = (
+            self.db.collection(TRACKED_USERS_COLLECTION).document(doc_id)
+        )
+        formatted_riot_id = {
+            "riot_id": new_riot_id,
+        }
+        doc_ref.update(formatted_riot_id)
+
+    async def get_guild_config(self, guild_id):
+        try:
+            config_ref = (
+                self.bot.db.collection(GUILD_CONFIG_COLLECTION).document(guild_id)
+            )
+            config = config_ref.get()
+            if config.exists:
+                channel_id = config.get("channel_id")
+                return channel_id
+            else:
+                return None
+        except Exception as e:
+            logger.exception(
+                f"❌ ERROR: fetching config for guild {guild_id}: {e}",
+            )
+
     async def set_guild_config(self, ctx):
         doc_ref = (
             self.bot.db.collection(GUILD_CONFIG_COLLECTION).document(str(ctx.guild.id))
