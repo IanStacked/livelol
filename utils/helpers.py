@@ -13,12 +13,12 @@ def parse_rank_info(old_data, new_data):
     }
 
 def rank_difference(ranked_info) -> bool:
-    old_tier = ranked_info.get("tier")
-    old_rank = ranked_info.get("rank")
-    old_lp = ranked_info.get("LP")
-    new_tier = ranked_info.get("tier")
-    new_rank = ranked_info.get("rank")
-    new_lp = ranked_info.get("LP")
+    old_tier = ranked_info.get("old_tier")
+    old_rank = ranked_info.get("old_rank")
+    old_lp = ranked_info.get("old_lp")
+    new_tier = ranked_info.get("new_tier")
+    new_rank = ranked_info.get("new_rank")
+    new_lp = ranked_info.get("new_lp")
     return not (old_tier == new_tier and old_rank == new_rank and old_lp == new_lp)
 
 def parse_region(unclean_region):
