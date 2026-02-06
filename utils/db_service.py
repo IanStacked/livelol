@@ -27,7 +27,7 @@ class DatabaseService:
     async def get_guild_config(self, guild_id):
         try:
             config_ref = (
-                self.bot.db.collection(GUILD_CONFIG_COLLECTION).document(guild_id)
+                self.db.collection(GUILD_CONFIG_COLLECTION).document(guild_id)
             )
             config = config_ref.get()
             if config.exists:
