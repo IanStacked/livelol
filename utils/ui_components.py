@@ -26,7 +26,6 @@ class MyHelp(commands.MinimalHelpCommand):
     def add_bot_commands_formatting(self, commands, _heading):
         """This replaces the category heading with an 'Available Commands' label."""
         if commands:
-            self.paginator.add_line("**Available Commands:**")
             for command in commands:
                 self.add_subcommand_formatting(command)
 
