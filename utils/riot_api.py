@@ -42,9 +42,33 @@ async def call_riot_api(session, url, headers, response_origin="americas", retri
                     return None
                 elif response.status == 403:
                     raise RiotAPIError("Riot API Key is invalid or expired.")
+                elif response.status == 400:
+                    # This should only happen on riot's side when a server issue causes
+                    # an api_url to be INCORRECTLY classified as not valid.
+                    # If we notice a lot of these warnings consistently showing up, it
+                    # is likely an error on our side.
+                    logger.warning(
+                        f"⚠️ (400) ({response_origin}) Riot validation failed.",
+                    )
+                    raise ServiceUnavailableError()
+                elif response.status == 500:
+                    logger.warning(
+                        f"⚠️ (500) ({response_origin}) Internal Riot server error.",
+                    )
+                    raise ServiceUnavailableError()
+                elif response.status == 502:
+                    logger.warning(
+                        f"⚠️ (502) ({response_origin}) Riot gateway connection issue.",
+                    )
+                    raise ServiceUnavailableError()
                 elif response.status == 503:
                     logger.warning(
                         f"⚠️ (503) ({response_origin}) Shard rejected request.",
+                    )
+                    raise ServiceUnavailableError()
+                elif response.status == 504:
+                    logger.warning(
+                        f"⚠️ (504) ({response_origin}) Riot gateway timeout.",
                     )
                     raise ServiceUnavailableError()
                 else:
