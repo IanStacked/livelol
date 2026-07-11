@@ -26,6 +26,27 @@ jobs:
 
       - name: Run Pytest
         run: uv run pytest
+
+  # Validate the Dockerfile builds on every PR (build only, no push), so a broken
+  # image is caught BEFORE it can merge to main. On push to main the deploy job
+  # below does the real build+push, so this PR-only gate never double-builds there.
+  docker-build:
+    name: Validate Docker build (no push)
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build image without pushing
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          platforms: linux/amd64
+          tags: league-bot:pr-${{ github.sha }}
+
   deploy:
     needs: test
     runs-on: ubuntu-latest
@@ -85,6 +106,7 @@ jobs:
               "Loaded cog: leaderboard"
               "Loaded cog: admin"
               "Background update task started"
+              "Heartbeat task started"
               "Loaded cog: background"
               "Loaded cog: track"
               "Bot connected as LiveLOL"

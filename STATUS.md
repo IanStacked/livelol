@@ -1,24 +1,26 @@
 # leaguehelper (LiveLOL) - STATUS
 
-**Phase:** Live / maintenance · **2026-07-10** · health: 🟢
+**Phase:** Live / maintenance · **2026-07-11** · health: 🟢
 
 ## Last run
-- Onboarded the repo to everythingdev standards (STATUS.md, project CLAUDE.md,
-  mise.toml, agent/ knowledge base, adversarial-review Stop-hook gate, PROJECT.yaml +
-  scripts/health.sh, daily-reports/ + bubble-ups/). Error handling unchanged - Sentry
-  stays the live path; the error-sink is wired dormant (`kind: none`). Work is on
-  branch `chore/everythingdev-onboarding`, not yet pushed (push to main deploys).
+- Merged everythingdev onboarding + the liveness heartbeat to `main` (squash `80375f6`)
+  and deployed. CI pipeline green: test -> Docker build/push -> EC2 deploy, bot booted
+  and connected as LiveLOL. Adversarial-review PASS (proposer tier T1) before merge.
+- Verified live post-deploy: `scripts/health.sh` reports `liveness: green` (bot beating,
+  connected ~54s ago). The heartbeat loop end-to-end works: bot writes
+  `bot_health/heartbeat` to Firestore every 60s; health.sh reads it via
+  `scripts/heartbeat_check.py`.
 
 ## Now / in progress
-- Onboarding branch ready for review. A real liveness heartbeat is now wired: the bot
-  writes `bot_health/heartbeat` to Firestore every 60s (`cogs/background.py`), and
-  `scripts/health.sh` reads it via `scripts/heartbeat_check.py`. Verified live against
-  Firestore - reports `down` today because the *deployed* bot predates this code; it
-  flips to `green` once the branch is deployed.
+- Nothing mid-flight. leaguehelper is on the everythingdev standard, live, health green.
+  It can now be used as the testbed for everythingdev features (daily-report,
+  chief-of-staff, risk-score, the adversarial-review Stop-hook gate).
 
 ## Next up
-1. Review the onboarding branch, then merge to `main` when ready (this triggers the
-   EC2 deploy pipeline - merge deliberately). After deploy, health flips to green.
+1. (optional) Add `Heartbeat task started` to the `ci.yml` deploy log-verification
+   steps so the heartbeat is checked at deploy time like the other cogs.
+2. (optional) Update the git remote to the new URL
+   (`github.com/IanStacked/livelol`) - the old `league-draft-prep-helper` redirects.
 
 ## Blockers / needs me
-- Merge-to-main is a live production deploy; hold until you explicitly want to ship.
+- none
