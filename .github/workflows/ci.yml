@@ -85,6 +85,7 @@ jobs:
               "Loaded cog: leaderboard"
               "Loaded cog: admin"
               "Background update task started"
+              "Heartbeat task started"
               "Loaded cog: background"
               "Loaded cog: track"
               "Bot connected as LiveLOL"
