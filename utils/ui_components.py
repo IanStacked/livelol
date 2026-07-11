@@ -11,17 +11,21 @@ from utils.logger_config import logger
 
 class MyHelp(commands.MinimalHelpCommand):
     def __init__(self):
-        super().__init__(command_attrs={
-            "checks": [commands.bot_has_permissions(
-                send_messages=True,
-                embed_links=True,
-            ).predicate],
-            "cooldown": commands.CooldownMapping.from_cooldown(
-                1,
-                3,
-                commands.BucketType.user,
-            ),
-        })
+        super().__init__(
+            command_attrs={
+                "checks": [
+                    commands.bot_has_permissions(
+                        send_messages=True,
+                        embed_links=True,
+                    ).predicate
+                ],
+                "cooldown": commands.CooldownMapping.from_cooldown(
+                    1,
+                    3,
+                    commands.BucketType.user,
+                ),
+            }
+        )
 
     def add_bot_commands_formatting(self, commands, _heading):
         """This replaces the category heading with an 'Available Commands' label."""
@@ -31,11 +35,11 @@ class MyHelp(commands.MinimalHelpCommand):
 
     async def send_bot_help(self, mapping):
         self.paginator.add_line(
-            "⚠️ **DISCLAIMER**: This bot is a personal project and is not " \
+            "⚠️ **DISCLAIMER**: This bot is a personal project and is not "
             "affiliated with Riot Games.",
         )
         self.paginator.add_line(
-            "**NOTE**: By default, the bot will not send live ranked updates until " \
+            "**NOTE**: By default, the bot will not send live ranked updates until "
             "the `!updateshere` command is used",
         )
         self.paginator.add_line()
@@ -50,8 +54,10 @@ class MyHelp(commands.MinimalHelpCommand):
         command_name = f"{self.context.clean_prefix}{self.invoked_with}"
         return f"Use `{command_name} [command]` for more info on a command."
 
+
 class MatchDetailsView(discord.ui.View):
     """A view that toggles between a simple rank update and a full match summary."""
+
     def __init__(self, match_data, ranked_data, riot_id, puuid, region, timeout=259200):
         super().__init__(timeout=timeout)
         self.match_data = match_data
@@ -67,11 +73,11 @@ class MatchDetailsView(discord.ui.View):
 
     def create_profile_buttons(self):
         try:
-            link_riot_id = self.riot_id.replace("#","-")
+            link_riot_id = self.riot_id.replace("#", "-")
             encoded_riot_id = urllib.parse.quote(link_riot_id)
             opgg_url = opgg_link(encoded_riot_id, self.region)
             deeplol_url = deeplol_link(encoded_riot_id, self.region)
-            if(opgg_url is not None):
+            if opgg_url is not None:
                 self.add_item(
                     discord.ui.Button(
                         label="OP.GG",
@@ -79,7 +85,7 @@ class MatchDetailsView(discord.ui.View):
                         style=discord.ButtonStyle.link,
                     ),
                 )
-            if(deeplol_url is not None):
+            if deeplol_url is not None:
                 self.add_item(
                     discord.ui.Button(
                         label="DeepLol",
@@ -115,17 +121,17 @@ class MatchDetailsView(discord.ui.View):
         """Creates the maximized embed with information on all players."""
         participants = self.match_data.get("participants")
         role_order = {
-            "TOP": 0, #Top
-            "JUNGLE": 1, #Jungle
-            "MIDDLE": 2, #Mid
-            "BOTTOM": 3, #ADC
-            "UTILITY": 4, #Support
+            "TOP": 0,  # Top
+            "JUNGLE": 1,  # Jungle
+            "MIDDLE": 2,  # Mid
+            "BOTTOM": 3,  # ADC
+            "UTILITY": 4,  # Support
         }
         sorted_participants = sorted(
             participants,
             key=lambda p: (
                 p["teamId"],
-                role_order.get(p.get("teamPosition",""), 5),
+                role_order.get(p.get("teamPosition", ""), 5),
             ),
         )
         blue_team = []
@@ -133,10 +139,10 @@ class MatchDetailsView(discord.ui.View):
         for p in sorted_participants:
             champion = p.get("championName")
             kda = f"{p.get('kills')}/{p.get('deaths')}/{p.get('assists')}"
-            game_name = p.get('riotIdGameName')
-            tag_line = p.get('riotIdTagline')
+            game_name = p.get("riotIdGameName")
+            tag_line = p.get("riotIdTagline")
             line = f"**{(game_name + '#' + tag_line):<10}** - {champion} ({kda})"
-            if p['teamId'] == 100:
+            if p["teamId"] == 100:
                 blue_team.append(line)
             else:
                 red_team.append(line)
@@ -176,7 +182,8 @@ class MatchDetailsView(discord.ui.View):
                 isinstance(
                     item,
                     discord.ui.Button,
-                ) and item.style != discord.ButtonStyle.link
+                )
+                and item.style != discord.ButtonStyle.link
             ):
                 item.disabled = True
         if self.message:
@@ -184,9 +191,10 @@ class MatchDetailsView(discord.ui.View):
                 discord.HTTPException,
                 discord.NotFound,
                 discord.Forbidden,
-                ):
+            ):
                 await self.message.edit(view=self)
         self.stop()
+
 
 def extract_minimized_embed_description(ranked_data, riot_id):
     old_tier = ranked_data.get("old_tier")

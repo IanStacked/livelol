@@ -37,8 +37,11 @@ if not db:
 # Bot Startup
 
 BOT_PREFIX = "!"
+
+
 class MyBot(commands.Bot):
     """The main bot engine."""
+
     def __init__(self):
         intents = discord.Intents.default()
         intents.message_content = True
@@ -61,11 +64,11 @@ class MyBot(commands.Bot):
         """Bot bootup sequence."""
         self.session = aiohttp.ClientSession()
         logger.info("✅ Persistent HTTP Session created.")
-        for filename in os.listdir('./cogs'):
-            if filename.endswith('.py'):
+        for filename in os.listdir("./cogs"):
+            if filename.endswith(".py"):
                 try:
                     cog_name = filename[:-3]
-                    await self.load_extension(f'cogs.{cog_name}')
+                    await self.load_extension(f"cogs.{cog_name}")
                     logger.info(f"✅ Loaded cog: {cog_name}")
                 except Exception as e:
                     logger.error(f"❌ Failed to load cog {filename}: {e}")
@@ -77,17 +80,21 @@ class MyBot(commands.Bot):
             logger.info("🛑 HTTP Session closed.")
         await super().close()
 
+
 bot = MyBot()
 bot.help_command = MyHelp()
 
 # Event Handlers
+
 
 @bot.event
 async def on_ready():
     # called when bot initially connects
     logger.info(f"✅ Bot connected as {bot.user.name} (ID: {bot.user.id})")
 
+
 # Command Definitions
+
 
 @commands.cooldown(1, 10, commands.BucketType.user)
 @commands.bot_has_permissions(send_messages=True, embed_links=True)
@@ -108,8 +115,8 @@ async def update(ctx):
     if not doc_list:
         return await ctx.send("No users tracked in this server. Use !track.")
     await ctx.send(
-        "Manual ranked update process has begun. " \
-        "This can take some time. " \
+        "Manual ranked update process has begun. "
+        "This can take some time. "
         "A confirmation message will be sent when the process is completed.",
     )
     for doc in doc_list:
@@ -156,7 +163,9 @@ async def update(ctx):
         await asyncio.sleep(1.5)
     return await ctx.send("Ranked information has been updated.")
 
+
 # Helper Functions
+
 
 def bot_startup():
     try:

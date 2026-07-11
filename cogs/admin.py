@@ -22,5 +22,6 @@ class Admin(commands.Cog):
         self.bot.db_service.set_guild_config(ctx)
         await ctx.send("Rank updates will now be posted in this channel")
 
+
 async def setup(bot):
     await bot.add_cog(Admin(bot))

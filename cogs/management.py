@@ -15,9 +15,9 @@ class Management(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(
-          self,
-          ctx: commands.Context,
-          error: commands.CommandError,
+        self,
+        ctx: commands.Context,
+        error: commands.CommandError,
     ):
         # Unwrap discord command error wrapper so we can access the original error.
         unwrapped_error = getattr(error, "original", error)
@@ -33,8 +33,8 @@ class Management(commands.Cog):
             )
         if isinstance(unwrapped_error, commands.CommandOnCooldown):
             embed = discord.Embed(
-                title = "Slow Down!",
-                description = (
+                title="Slow Down!",
+                description=(
                     f"You're using '{ctx.command}' too fast. \
                     Try again in {round(error.retry_after, 2)}s."
                 ),
@@ -70,6 +70,7 @@ class Management(commands.Cog):
         await self.bot.db_service.remove_guild_config(guild)
         await self.bot.db_service.untrack_all_users(guild)
         logger.info(f"Bot removed from guild: {guild.name} ({guild.id})")
+
 
 async def setup(bot):
     await bot.add_cog(Management(bot))

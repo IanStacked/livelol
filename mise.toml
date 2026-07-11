@@ -1,0 +1,15 @@
+# Per-project toolchain pin - committed to the project so every machine (macOS, Linux,
+# WSL, Windows) resolves identical language versions. This is the ~90%-of-container
+# determinism the everything-repo buys without container friction: `mise` pins the
+# languages here; your lockfiles (uv.lock / pnpm-lock) pin the dependencies.
+#
+# On a fresh checkout:  mise install   (installs exactly these versions)
+# init-project.sh drops this file; edit the versions to match the project.
+
+[tools]
+# auto-detected from this project's own version files; adjust as needed.
+python = "3.12"
+
+[env]
+# Opt-in: auto-load a project .env when mise activates in this dir. Never commit secrets.
+# _.file = ".env"

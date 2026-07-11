@@ -16,9 +16,7 @@ class DatabaseService:
 
     async def update_riot_id(self, puuid, new_riot_id):
         doc_id = puuid
-        doc_ref = (
-            self.db.collection(TRACKED_USERS_COLLECTION).document(doc_id)
-        )
+        doc_ref = self.db.collection(TRACKED_USERS_COLLECTION).document(doc_id)
         formatted_riot_id = {
             "riot_id": new_riot_id,
         }
@@ -26,9 +24,7 @@ class DatabaseService:
 
     async def get_guild_config(self, guild_id):
         try:
-            config_ref = (
-                self.db.collection(GUILD_CONFIG_COLLECTION).document(guild_id)
-            )
+            config_ref = self.db.collection(GUILD_CONFIG_COLLECTION).document(guild_id)
             config = config_ref.get()
             if config.exists:
                 channel_id = config.get("channel_id")
@@ -41,15 +37,15 @@ class DatabaseService:
             )
 
     async def set_guild_config(self, ctx):
-        doc_ref = (
-            self.bot.db.collection(GUILD_CONFIG_COLLECTION).document(str(ctx.guild.id))
+        doc_ref = self.bot.db.collection(GUILD_CONFIG_COLLECTION).document(
+            str(ctx.guild.id)
         )
         doc_ref.set({"channel_id": ctx.channel.id}, merge=True)
 
     async def remove_guild_config(self, guild):
         try:
-            doc_ref = (
-            self.db.collection(GUILD_CONFIG_COLLECTION).document(str(guild.id))
+            doc_ref = self.db.collection(GUILD_CONFIG_COLLECTION).document(
+                str(guild.id)
             )
             if doc_ref is None:
                 # File was never created
@@ -59,8 +55,7 @@ class DatabaseService:
             logger.exception(f"❌ ERROR: failed to delete guild config {guild.id}")
             raise DatabaseError(
                 f"Database operation failed for guild {guild.id}: {e}",
-                ) from e
-
+            ) from e
 
     # Player operations
 
@@ -94,8 +89,7 @@ class DatabaseService:
             )
             raise DatabaseError(
                 f"Database operation failed for guild {guild.id}: {e}",
-                ) from e
-
+            ) from e
 
     async def track_user(self, ctx, riot_id: str, puuid: str, ranked_data, region):
         guild_id_str = str(ctx.guild.id)

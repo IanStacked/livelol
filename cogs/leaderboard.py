@@ -72,5 +72,6 @@ class Leaderboard(commands.Cog):
         embed.description = description
         await ctx.send(embed=embed)
 
+
 async def setup(bot):
     await bot.add_cog(Leaderboard(bot))

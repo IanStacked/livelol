@@ -47,22 +47,22 @@ class Track(commands.Cog):
         parsed_region = parse_region(region)
         if not parsed_region:
             return await ctx.send(
-                "Invalid input, please ensure syntax " \
+                "Invalid input, please ensure syntax "
                 "is: !track region username#tagline.",
             )
         if parsed_region not in REGION_CLUSTERS:
             return await ctx.send(
-                "The region inputted is invalid. " \
-                "Please ensure syntax " \
-                "is: !track region username#tagline. " \
-                "List of valid regions: br1, eun1, euw1, jp1, kr, la1, la2, na1, " \
-                "oc1, tr1, ru, ph2, sg2, th2, tw2, vn2, me1 " \
+                "The region inputted is invalid. "
+                "Please ensure syntax "
+                "is: !track region username#tagline. "
+                "List of valid regions: br1, eun1, euw1, jp1, kr, la1, la2, na1, "
+                "oc1, tr1, ru, ph2, sg2, th2, tw2, vn2, me1 "
                 "For more detailed information, use !help track.",
             )
         parsed_riot_id = parse_riot_id(riot_id)
         if not parsed_riot_id:
             return await ctx.send(
-                "Invalid input, please ensure syntax " \
+                "Invalid input, please ensure syntax "
                 "is: !track region username#tagline.",
             )
         username = parsed_riot_id[0]
@@ -78,11 +78,11 @@ class Track(commands.Cog):
             )
             if not summoner_info:
                 raise UserNotFoundError(
-                    f"Player {riot_id} was found, " \
-                    f"but they do not have a profile on {parsed_region}. " \
-                    "Please enter the users correct region. " \
-                    "List of valid regions: br1, eun1, euw1, jp1, kr, la1, la2, na1, " \
-                    "oc1, tr1, ru, ph2, sg2, th2, tw2, vn2, me1 " \
+                    f"Player {riot_id} was found, "
+                    f"but they do not have a profile on {parsed_region}. "
+                    "Please enter the users correct region. "
+                    "List of valid regions: br1, eun1, euw1, jp1, kr, la1, la2, na1, "
+                    "oc1, tr1, ru, ph2, sg2, th2, tw2, vn2, me1 "
                     "For more detailed information, use !help track.",
                 )
             ranked_data = await get_ranked_info(
@@ -102,7 +102,6 @@ class Track(commands.Cog):
         except DatabaseError as e:
             logger.exception(f"Database write failed for {riot_id}: {e}")
             raise e
-
 
     @commands.cooldown(1, 5, commands.BucketType.user)
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
@@ -135,6 +134,7 @@ class Track(commands.Cog):
         except DatabaseError as e:
             logger.exception(f"Database write failed for {riot_id}: {e}")
             raise e
+
 
 async def setup(bot):
     await bot.add_cog(Track(bot))

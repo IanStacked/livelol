@@ -11,6 +11,8 @@ from utils.logger_config import logger
 
 TRACKED_USERS_COLLECTION = "tracked_users"
 GUILD_CONFIG_COLLECTION = "guild_config"
+BOT_HEALTH_COLLECTION = "bot_health"
+HEARTBEAT_DOC = "heartbeat"
 
 
 def database_startup():

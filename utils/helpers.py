@@ -2,6 +2,7 @@
 # If you notice a group of these functions having similar functionality,
 # make a separate file for them.
 
+
 def parse_rank_info(old_data, new_data):
     return {
         "old_tier": old_data.get("tier"),
@@ -12,6 +13,7 @@ def parse_rank_info(old_data, new_data):
         "new_lp": new_data.get("LP"),
     }
 
+
 def rank_difference(ranked_info) -> bool:
     old_tier = ranked_info.get("old_tier")
     old_rank = ranked_info.get("old_rank")
@@ -20,6 +22,7 @@ def rank_difference(ranked_info) -> bool:
     new_rank = ranked_info.get("new_rank")
     new_lp = ranked_info.get("new_lp")
     return not (old_tier == new_tier and old_rank == new_rank and old_lp == new_lp)
+
 
 def parse_region(unclean_region):
     """Parses an unclean_region string.
@@ -33,15 +36,17 @@ def parse_region(unclean_region):
     clean_region = unclean_region.strip()
     return clean_region.lower()
 
+
 def check_new_riot_id(match_info, puuid, riot_id) -> str:
     """Checks if a user has changed their riotid and returns new riotid if new."""
     for p in match_info.get("participants"):
-        if(p.get("puuid") == puuid):
-            match_riot_id = p.get('riotIdGameName') + "#" + p.get('riotIdTagline')
-            if(match_riot_id != riot_id):
+        if p.get("puuid") == puuid:
+            match_riot_id = p.get("riotIdGameName") + "#" + p.get("riotIdTagline")
+            if match_riot_id != riot_id:
                 return match_riot_id
             else:
                 return ""
+
 
 def extract_match_info(match_dto, puuid):
     if not match_dto or "info" not in match_dto:
@@ -59,6 +64,7 @@ def extract_match_info(match_dto, puuid):
         "win": win,
     }
     return info
+
 
 def parse_riot_id(unclean_riot_id):
     """Parses a Riot ID string and returns (username, tagline)."""

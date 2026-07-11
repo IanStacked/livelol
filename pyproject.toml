@@ -1,7 +1,7 @@
 [project]
 name = "leaguehelper"
 version = "0.1.0"
-description = "Add your description here"
+description = "LiveLOL - a Discord bot that tracks League of Legends ranked progress in real time."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -19,11 +19,11 @@ dependencies = [
 ]
 
 [tool.ruff]
-target-version = "py311"
+target-version = "py312"
 line-length = 88
 
 [tool.ruff.lint]
-select = ["E", "W", "F", "I", "N", "UP", "B", "SIM", "ARG", "D", "COM812"]
+select = ["E", "W", "F", "I", "N", "UP", "B", "SIM", "ARG", "D"]
 ignore = [
     "D100",
     "D101",

@@ -80,13 +80,16 @@ async def call_riot_api(session, url, headers, response_origin="americas", retri
 
 # Specific Data Fetchers
 
+
 async def get_summoner_info(session, puuid, region, riot_api_key):
     """Checks if a user has the correct region.
 
     This API call is unique in that it will only return a 200 status if the users
     region is correct.
     """
-    api_url = f"https://{region}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{puuid}"
+    api_url = (
+        f"https://{region}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{puuid}"
+    )
     headers = {
         "X-Riot-Token": riot_api_key,
         "Accept": "application/json",
@@ -94,6 +97,7 @@ async def get_summoner_info(session, puuid, region, riot_api_key):
     }
     summoner_info = await call_riot_api(session, api_url, headers, region)
     return summoner_info
+
 
 async def get_recent_match_info(session, puuid, cluster, riot_api_key):
     api_url = f"https://{cluster}.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids?queue=420&count=1"
@@ -126,7 +130,9 @@ async def get_puuid(session, game_name, tag_line, riot_api_key):
 
 
 async def get_ranked_info(session, puuid, region, riot_api_key):
-    api_url = f"https://{region}.api.riotgames.com/lol/league/v4/entries/by-puuid/{puuid}"
+    api_url = (
+        f"https://{region}.api.riotgames.com/lol/league/v4/entries/by-puuid/{puuid}"
+    )
     headers = {
         "X-Riot-Token": riot_api_key,
         "Accept": "application/json",

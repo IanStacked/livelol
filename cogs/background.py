@@ -1,9 +1,14 @@
 import asyncio
 
 from discord.ext import commands, tasks
+from firebase_admin import firestore
 
 from bot import RIOT_API_KEY
-from database import TRACKED_USERS_COLLECTION
+from database import (
+    BOT_HEALTH_COLLECTION,
+    HEARTBEAT_DOC,
+    TRACKED_USERS_COLLECTION,
+)
 from utils.constants import REGION_CLUSTERS
 from utils.exceptions import ServiceUnavailableError
 from utils.helpers import (
@@ -25,10 +30,38 @@ class Background(commands.Cog):
         if not self.background_update_task.is_running():
             self.background_update_task.start()
             logger.info("✅ Background update task started.")
+        if not self.heartbeat_task.is_running():
+            self.heartbeat_task.start()
+            logger.info("✅ Heartbeat task started.")
 
     def cog_unload(self):
-        """Clean up task if cog is unloaded."""
+        """Clean up tasks if cog is unloaded."""
         self.background_update_task.cancel()
+        self.heartbeat_task.cancel()
+
+    @tasks.loop(seconds=60)
+    async def heartbeat_task(self):
+        """Write a liveness heartbeat to Firestore.
+
+        Proves the bot's event loop is alive. `scripts/health.sh` reads this doc
+        and derives liveness from how fresh `last_beat` is. Guarded so a heartbeat
+        failure (e.g. a transient Firestore error) never disrupts the bot.
+        """
+        try:
+            self.bot.db.collection(BOT_HEALTH_COLLECTION).document(HEARTBEAT_DOC).set(
+                {
+                    "last_beat": firestore.SERVER_TIMESTAMP,
+                    "connected": self.bot.is_ready() and not self.bot.is_closed(),
+                    "latency_ms": round(self.bot.latency * 1000),
+                    "bot_user": str(self.bot.user),
+                },
+            )
+        except Exception as e:
+            logger.warning(f"⚠️ Heartbeat write failed: {e}")
+
+    @heartbeat_task.before_loop
+    async def before_heartbeat_task(self):
+        await self.bot.wait_until_ready()
 
     @tasks.loop(minutes=10)
     async def background_update_task(self):
@@ -98,6 +131,7 @@ class Background(commands.Cog):
     @background_update_task.before_loop
     async def before_background_task(self):
         await self.bot.wait_until_ready()
+
 
 async def setup(bot):
     await bot.add_cog(Background(bot))
