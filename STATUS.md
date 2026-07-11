@@ -23,10 +23,8 @@
   chief-of-staff, risk-score, the adversarial-review Stop-hook gate).
 
 ## Next up
-1. (optional) Add `Heartbeat task started` to the `ci.yml` deploy log-verification
-   steps so the heartbeat is checked at deploy time like the other cogs.
-2. (optional) Update the git remote to the new URL
-   (`github.com/IanStacked/livelol`) - the old `league-draft-prep-helper` redirects.
+- none pending. (Prior items cleared: the `Heartbeat task started` check already
+  exists in `ci.yml`; the git remote is already repointed to `IanStacked/livelol`.)
 
 ## Blockers / needs me
 - none

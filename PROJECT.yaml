@@ -3,7 +3,7 @@
 # daily-report skill consume this file + STATUS.md + daily-reports/.
 
 project: leaguehelper
-repo: IanStacked/league-draft-prep-helper
+repo: IanStacked/livelol
 description: LiveLOL - a Discord bot that tracks League of Legends ranked progress in real time.
 
 escalate_at: T3

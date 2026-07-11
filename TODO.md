@@ -6,7 +6,7 @@ Backlog for the notice -> record -> auto-complete pipeline. Line format:
 
 ## Open
 
-- [ ] (remote-slug) Repoint git remote + PROJECT.yaml repo: to canonical IanStacked/livelol slug; old league-draft-prep-helper only redirects <!-- where:PROJECT.yaml:6 found:2026-07-10 by:daily-brief -->
-- [ ] (status-stale-heartbeat) Remove stale STATUS.md Next-up #1 (add Heartbeat check to ci.yml); the check already exists in the deploy log-verification <!-- where:.github/workflows/ci.yml:109 found:2026-07-10 by:daily-brief -->
-
 ## Done
+
+- [x] (remote-slug) Repoint git remote + PROJECT.yaml repo: to canonical IanStacked/livelol slug; old league-draft-prep-helper only redirects <!-- where:PROJECT.yaml:6 found:2026-07-10 by:daily-brief done:2026-07-10 disposition:auto-silent -->
+- [x] (status-stale-heartbeat) Remove stale STATUS.md Next-up #1 (add Heartbeat check to ci.yml); the check already exists in the deploy log-verification <!-- where:.github/workflows/ci.yml:109 found:2026-07-10 by:daily-brief done:2026-07-10 disposition:auto-silent -->
