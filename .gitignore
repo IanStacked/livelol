@@ -15,3 +15,7 @@ league_bot_key.pem
 .env
 
 .claude/.review-state
+
+# everythingdev internal (kept local, not published)
+TODO.md
+daily-reports/
