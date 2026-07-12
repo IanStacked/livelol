@@ -19,7 +19,7 @@ class Admin(commands.Cog):
         If this command is not used, by default the bot will simply not post
         live ranked updates.
         """
-        self.bot.db_service.set_guild_config(ctx)
+        await self.bot.db_service.set_guild_config(ctx.guild.id, ctx.channel.id)
         await ctx.send("Rank updates will now be posted in this channel")
 
 

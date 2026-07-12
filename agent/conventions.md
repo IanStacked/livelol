@@ -8,8 +8,11 @@
 - Tunable values (tier/rank ordering, region maps) are module-level named constants in
   `utils/constants.py`, not inline literals.
 - Cogs hold command/listener logic; Firestore access goes through
-  `utils/db_service.DatabaseService`, not raw collection calls in cogs (the older
-  `!update` in `bot.py` predates this and still queries Firestore directly).
+  `utils/db_service.DatabaseService`, not raw collection calls in cogs, and cogs pass
+  plain values (ids, dicts) to it - never discord objects like `ctx`/`Guild`. Two
+  documented exceptions still touch Firestore directly: the older `!update` in `bot.py`
+  (predates the service) and `background.py`'s guarded `heartbeat_task` write (a health
+  primitive, not a league operation).
 - Riot API access is centralized in `utils/riot_api.py`; cogs call its functions rather
   than building HTTP requests themselves.
 
