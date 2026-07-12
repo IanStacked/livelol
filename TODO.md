@@ -6,6 +6,15 @@ Backlog for the notice -> record -> auto-complete pipeline. Line format:
 
 ## Open
 
+- [ ] (cog-error-handling) Fix/standardize error handling across all cogs <!-- where:cogs/ found:2026-07-11 by:user -->
+- [ ] (db-service-soc) Separation-of-concerns: db_service should not receive discord ctx objects <!-- where:utils/db_service.py found:2026-07-11 by:user -->
+- [ ] (command-type-hints) Add type hints ("typing flairs") to all commands <!-- where:cogs/ found:2026-07-11 by:user -->
+- [ ] (db-migrate-admin) Finish moving remaining DB tasks into db_service.py from admin.py <!-- where:cogs/admin.py found:2026-07-11 by:user -->
+- [ ] (db-migrate-background) Finish moving remaining DB tasks into db_service.py from background.py <!-- where:cogs/background.py found:2026-07-11 by:user -->
+- [ ] (lp-streaks) Add LP gain streak / LP lose streak tracking <!-- where:cogs/background.py found:2026-07-11 by:user -->
+- [ ] (dodge-update-type) New ranked-update type for dodges: after an LP change, check whether the match's gameStartTimestamp/gameEndTimestamp (InfoDto in MatchDto) lines up with the change; won't catch games played at 0 LP, no cheap fix that keeps API calls reasonable <!-- where:cogs/background.py found:2026-07-11 by:user -->
+- [ ] (non-soloduo-matches) Handle non-solo/duo ranked matches <!-- where:cogs/background.py found:2026-07-11 by:user -->
+
 ## Done
 
 - [x] (remote-slug) Repoint git remote + PROJECT.yaml repo: to canonical IanStacked/livelol slug; old league-draft-prep-helper only redirects <!-- where:PROJECT.yaml:6 found:2026-07-10 by:daily-brief done:2026-07-10 disposition:auto-silent -->
