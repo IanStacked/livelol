@@ -17,6 +17,7 @@
 | **Guild** | A Discord server. Guild-scoped config (updates channel) lives in `guild_config`. |
 | **Cog** | A discord.py module grouping related commands/listeners (`cogs/*.py`). |
 | **Heartbeat** | A `bot_health/heartbeat` Firestore doc the bot rewrites every 60s (`last_beat`, `connected`, `latency_ms`). The liveness source for `scripts/health.sh`. |
+| **Streak** | A signed count of consecutive ranked wins (positive) or losses (negative) from the match `win` field, stored as `streak` on the tracked-user doc. Surfaced in the update embed once `abs(streak) >= STREAK_DISPLAY_THRESHOLD` (3). Guarded by `last_match_id` so a repeat match (LP change with no new game) never double-counts. |
 
 ## Core business rules
 

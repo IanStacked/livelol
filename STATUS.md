@@ -2,8 +2,8 @@
 
 <!-- everythingdev:auto-continuity (auto-managed - regenerated each session; edit the sections below, not here) -->
 ## Continuity (auto)
-- Last active: 2026-07-11T23:24:39-07:00
-- Branch: `chore/complete-todos-2026-07-11` @ `2f0c14f` "docs: update STATUS.md narrative after complete-todos sweep"
+- Last active: 2026-07-12T00:34:05-07:00
+- Branch: `main` @ `3df566e` "docs: update STATUS.md narrative after refactor PRs shipped"
 - Working tree: clean
 <!-- /everythingdev:auto-continuity -->
 **Phase:** Live / maintenance · **2026-07-11** · health: 🟢
@@ -18,17 +18,21 @@
   `scripts/heartbeat_check.py`.
 
 ## Now / in progress
-- `/complete-todos` sweep done. Branch `chore/complete-todos-2026-07-11` ready (commits
-  `86d4fbf` cog type hints + `1ff38be` backlog bookkeeping). Adversarial-review PASS,
-  tests/lint/format green. NOT pushed - waiting on go-ahead to open the PR (merge deploys
-  to EC2). Only `command-type-hints` cleared the auto tier (T1); the other 7 TODO items
-  are T2/T3 and stay filed for a human.
+- `lp-streaks` built + adversarial-review PASS on branch `feat/lp-streaks` (commit `e42a10f`,
+  NOT pushed). Signed win/loss streak on the tracked-user doc, surfaced in the embed at |streak|>=3,
+  guarded by `last_match_id` so a no-new-game LP change (dodge) doesn't double-count. Tests green
+  (21 passed), ruff clean. Of the 3 feature TODOs the user descoped flex (`non-soloduo`) and deferred
+  `dodge-update-type` for investigation - so only lp-streaks shipped this round.
+- Awaiting go-ahead to open the PR (deploy-on-push to main → land via PR, not local merge).
 
 ## Next up
-- Get go-ahead, then open PR for `chore/complete-todos-2026-07-11` -> main and babysit the
-  CI/EC2 deploy to green.
-- 7 deferred TODO items remain (error-handling standardization, db_service SoC, two DB
-  migrations, LP streaks, dodge detection, non-solo/duo matches) - each wants a human.
+- On go-ahead: open PR for `feat/lp-streaks`, babysit CI (test → Docker build → EC2 deploy) to green,
+  verify the streak line renders live. Rollback ready if the deploy drifts.
+- Deferred features: `dodge-update-type` (needs investigation; `last_match_id` is now the hook for it)
+  and `non-soloduo` (descoped - user doesn't want flex).
+- Backlog bugs filed this session (TODO.md): `extract_match_info` UnboundLocalError, name-change log
+  prints new->new, !update shows no streak. Plus earlier: untrack nested-key KeyError,
+  UserNotFoundError-wrapped-as-DatabaseError, bot.py !update still raw Firestore.
 
 ## Blockers / needs me
 - none
