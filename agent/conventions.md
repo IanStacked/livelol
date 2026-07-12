@@ -28,8 +28,17 @@
 - Domain errors use the `LiveLOLError` hierarchy in `utils/exceptions.py`
   (`RiotAPIError`, `RateLimitError`, `UserNotFoundError`, `DatabaseError`,
   `ServiceUnavailableError`, …). Raise the narrowest type.
+- **Commands raise; they do not render their own error text.** A command that hits an
+  error condition raises the narrowest `LiveLOLError` and lets `on_command_error` send
+  the user-facing message. Commands don't catch-log-reraise (the service layer already
+  logs) and don't `ctx.send` ad-hoc error strings. Input *validation* (bad region/Riot
+  ID syntax) is the exception - it returns early with a guidance message.
 - `cogs/management.py on_command_error` is the central handler mapping errors (and
   discord.py cooldown/permission errors) to user-facing messages.
+- **The background task guards each user.** `background_update_task` wraps per-user
+  processing in `try/except LiveLOLError` (log a warning, skip that user) and a broad
+  `except Exception` (log with traceback), so one player's Riot/DB failure never aborts
+  the whole update cycle. The rate-limit `asyncio.sleep(1.5)` pacing is preserved.
 - Sentry captures `logger.error`/exceptions via `LoggingIntegration`
   (`utils/sentry_config.py`). Logging an error at ERROR level ships it to Sentry.
 - Prefer specific `except <Type>` over bare `except`; the codebase logs with emoji

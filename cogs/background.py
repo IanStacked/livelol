@@ -9,7 +9,7 @@ from database import (
     HEARTBEAT_DOC,
 )
 from utils.constants import REGION_CLUSTERS
-from utils.exceptions import ServiceUnavailableError
+from utils.exceptions import LiveLOLError
 from utils.helpers import (
     check_new_riot_id,
     extract_match_info,
@@ -74,6 +74,8 @@ class Background(commands.Cog):
                 cluster = REGION_CLUSTERS.get(region)
                 riot_id = user.get("riot_id")
                 guild_ids = user.get("guild_ids")
+                # Guard each user so one player's Riot/DB error (rate-limited shard,
+                # missing match, renamed account) never aborts the whole cycle.
                 try:
                     data = await get_ranked_info(
                         self.bot.session,
@@ -81,48 +83,49 @@ class Background(commands.Cog):
                         region,
                         RIOT_API_KEY,
                     )
-                except ServiceUnavailableError:
-                    continue
-                ranked_data = parse_rank_info(user, data)
-                if not rank_difference(ranked_data):
-                    continue
-                await self.bot.db_service.update_ranked_data(puuid, data)
-                try:
+                    ranked_data = parse_rank_info(user, data)
+                    if not rank_difference(ranked_data):
+                        continue
+                    await self.bot.db_service.update_ranked_data(puuid, data)
                     match_info = await get_recent_match_info(
                         self.bot.session,
                         puuid,
                         cluster,
                         RIOT_API_KEY,
                     )
-                except ServiceUnavailableError:
-                    continue
-                processed_match_info = extract_match_info(match_info, puuid)
-                new_riot_id = check_new_riot_id(
-                    processed_match_info,
-                    puuid,
-                    riot_id,
-                )
-                if new_riot_id:
-                    await self.bot.db_service.update_riot_id(puuid, new_riot_id)
-                    riot_id = new_riot_id
-                    logger.info(f"📝 Name Change Detected: {riot_id} -> {new_riot_id}")
-                for guild in guild_ids:
-                    channel_id = await self.bot.db_service.get_guild_config(guild)
-                    if channel_id is None:
-                        continue
-                    channel = self.bot.get_channel(channel_id)
-                    view = MatchDetailsView(
+                    processed_match_info = extract_match_info(match_info, puuid)
+                    new_riot_id = check_new_riot_id(
                         processed_match_info,
-                        ranked_data,
-                        riot_id,
                         puuid,
-                        region,
+                        riot_id,
                     )
-                    initial_embed = view.create_minimized_embed()
-                    message = await channel.send(embed=initial_embed, view=view)
-                    view.message = message
-                # This sleep ensures we stay behind API Rate limit curve.
-                await asyncio.sleep(1.5)
+                    if new_riot_id:
+                        await self.bot.db_service.update_riot_id(puuid, new_riot_id)
+                        riot_id = new_riot_id
+                        logger.info(
+                            f"📝 Name Change Detected: {riot_id} -> {new_riot_id}"
+                        )
+                    for guild in guild_ids:
+                        channel_id = await self.bot.db_service.get_guild_config(guild)
+                        if channel_id is None:
+                            continue
+                        channel = self.bot.get_channel(channel_id)
+                        view = MatchDetailsView(
+                            processed_match_info,
+                            ranked_data,
+                            riot_id,
+                            puuid,
+                            region,
+                        )
+                        initial_embed = view.create_minimized_embed()
+                        message = await channel.send(embed=initial_embed, view=view)
+                        view.message = message
+                    # This sleep ensures we stay behind API Rate limit curve.
+                    await asyncio.sleep(1.5)
+                except LiveLOLError as e:
+                    logger.warning(f"⚠️ Skipping {riot_id} this cycle: {e}")
+                except Exception as e:
+                    logger.exception(f"❌ ERROR processing {riot_id}: {e}")
         except Exception as e:
             logger.exception(f"❌ ERROR: {e}")
 
