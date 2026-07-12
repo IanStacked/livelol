@@ -2,8 +2,8 @@
 
 <!-- everythingdev:auto-continuity (auto-managed - regenerated each session; edit the sections below, not here) -->
 ## Continuity (auto)
-- Last active: 2026-07-10T21:30:41-07:00
-- Branch: `main` @ `929e9bc` "docs: seed TODO.md backlog with remote-slug and stale-status items"
+- Last active: 2026-07-11T17:08:25-07:00
+- Branch: `main` @ `72df067` "chore: complete-todos sweep - fix stale repo slug and heartbeat status"
 - Working tree: clean
 <!-- /everythingdev:auto-continuity -->
 **Phase:** Live / maintenance · **2026-07-11** · health: 🟢
