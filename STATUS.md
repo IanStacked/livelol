@@ -18,17 +18,18 @@
   `scripts/heartbeat_check.py`.
 
 ## Now / in progress
-- `/complete-todos` sweep done. Branch `chore/complete-todos-2026-07-11` ready (commits
-  `86d4fbf` cog type hints + `1ff38be` backlog bookkeeping). Adversarial-review PASS,
-  tests/lint/format green. NOT pushed - waiting on go-ahead to open the PR (merge deploys
-  to EC2). Only `command-type-hints` cleared the auto tier (T1); the other 7 TODO items
-  are T2/T3 and stay filed for a human.
+- Both refactor TODOs shipped to prod. Merged + deployed green (bot live): PR #3 cog type
+  hints, PR #4 db_service SoC + raw-Firestore migration out of cogs, PR #5 standardized cog
+  error handling. Also fixed 3 real bugs (silent !updateshere no-op, Sentry double-log, one
+  bad player aborting the whole update cycle). Local main synced/clean.
+- User asked to HOLD before starting any feature work.
 
 ## Next up
-- Get go-ahead, then open PR for `chore/complete-todos-2026-07-11` -> main and babysit the
-  CI/EC2 deploy to green.
-- 7 deferred TODO items remain (error-handling standardization, db_service SoC, two DB
-  migrations, LP streaks, dodge detection, non-solo/duo matches) - each wants a human.
+- On go-ahead, start the 3 remaining feature TODOs, `lp-streaks` first (most self-contained):
+  plan a design + confirm decisions before coding. Then `dodge-update-type` (author flagged:
+  no cheap impl) and `non-soloduo-matches`.
+- Also filed for later: `untrack` nested-key KeyError, UserNotFoundError-wrapped-as-DatabaseError,
+  bot.py !update still raw Firestore (see TODO.md).
 
 ## Blockers / needs me
 - none
