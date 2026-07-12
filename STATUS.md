@@ -18,18 +18,21 @@
   `scripts/heartbeat_check.py`.
 
 ## Now / in progress
-- Both refactor TODOs shipped to prod. Merged + deployed green (bot live): PR #3 cog type
-  hints, PR #4 db_service SoC + raw-Firestore migration out of cogs, PR #5 standardized cog
-  error handling. Also fixed 3 real bugs (silent !updateshere no-op, Sentry double-log, one
-  bad player aborting the whole update cycle). Local main synced/clean.
-- User asked to HOLD before starting any feature work.
+- `lp-streaks` built + adversarial-review PASS on branch `feat/lp-streaks` (commit `e42a10f`,
+  NOT pushed). Signed win/loss streak on the tracked-user doc, surfaced in the embed at |streak|>=3,
+  guarded by `last_match_id` so a no-new-game LP change (dodge) doesn't double-count. Tests green
+  (21 passed), ruff clean. Of the 3 feature TODOs the user descoped flex (`non-soloduo`) and deferred
+  `dodge-update-type` for investigation - so only lp-streaks shipped this round.
+- Awaiting go-ahead to open the PR (deploy-on-push to main → land via PR, not local merge).
 
 ## Next up
-- On go-ahead, start the 3 remaining feature TODOs, `lp-streaks` first (most self-contained):
-  plan a design + confirm decisions before coding. Then `dodge-update-type` (author flagged:
-  no cheap impl) and `non-soloduo-matches`.
-- Also filed for later: `untrack` nested-key KeyError, UserNotFoundError-wrapped-as-DatabaseError,
-  bot.py !update still raw Firestore (see TODO.md).
+- On go-ahead: open PR for `feat/lp-streaks`, babysit CI (test → Docker build → EC2 deploy) to green,
+  verify the streak line renders live. Rollback ready if the deploy drifts.
+- Deferred features: `dodge-update-type` (needs investigation; `last_match_id` is now the hook for it)
+  and `non-soloduo` (descoped - user doesn't want flex).
+- Backlog bugs filed this session (TODO.md): `extract_match_info` UnboundLocalError, name-change log
+  prints new->new, !update shows no streak. Plus earlier: untrack nested-key KeyError,
+  UserNotFoundError-wrapped-as-DatabaseError, bot.py !update still raw Firestore.
 
 ## Blockers / needs me
 - none
