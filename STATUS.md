@@ -2,8 +2,8 @@
 
 <!-- everythingdev:auto-continuity (auto-managed - regenerated each session; edit the sections below, not here) -->
 ## Continuity (auto)
-- Last active: 2026-07-11T23:24:39-07:00
-- Branch: `chore/complete-todos-2026-07-11` @ `2f0c14f` "docs: update STATUS.md narrative after complete-todos sweep"
+- Last active: 2026-07-12T00:34:05-07:00
+- Branch: `main` @ `3df566e` "docs: update STATUS.md narrative after refactor PRs shipped"
 - Working tree: clean
 <!-- /everythingdev:auto-continuity -->
 **Phase:** Live / maintenance · **2026-07-11** · health: 🟢
