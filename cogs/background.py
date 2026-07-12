@@ -25,7 +25,7 @@ from utils.ui_components import MatchDetailsView
 class Background(commands.Cog):
     """Handles bot background processes."""
 
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         if not self.background_update_task.is_running():
             self.background_update_task.start()
@@ -34,13 +34,13 @@ class Background(commands.Cog):
             self.heartbeat_task.start()
             logger.info("✅ Heartbeat task started.")
 
-    def cog_unload(self):
+    def cog_unload(self) -> None:
         """Clean up tasks if cog is unloaded."""
         self.background_update_task.cancel()
         self.heartbeat_task.cancel()
 
     @tasks.loop(seconds=60)
-    async def heartbeat_task(self):
+    async def heartbeat_task(self) -> None:
         """Write a liveness heartbeat to Firestore.
 
         Proves the bot's event loop is alive. `scripts/health.sh` reads this doc
@@ -60,11 +60,11 @@ class Background(commands.Cog):
             logger.warning(f"⚠️ Heartbeat write failed: {e}")
 
     @heartbeat_task.before_loop
-    async def before_heartbeat_task(self):
+    async def before_heartbeat_task(self) -> None:
         await self.bot.wait_until_ready()
 
     @tasks.loop(minutes=10)
-    async def background_update_task(self):
+    async def background_update_task(self) -> None:
         """Bot background update task."""
         try:
             logger.info("♻️ Starting background update loop")
@@ -129,9 +129,9 @@ class Background(commands.Cog):
             logger.exception(f"❌ ERROR: {e}")
 
     @background_update_task.before_loop
-    async def before_background_task(self):
+    async def before_background_task(self) -> None:
         await self.bot.wait_until_ready()
 
 
-async def setup(bot):
+async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Background(bot))

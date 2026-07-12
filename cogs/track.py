@@ -11,13 +11,13 @@ from utils.riot_api import get_puuid, get_ranked_info, get_summoner_info
 class Track(commands.Cog):
     """Handles bot user tracking functionality."""
 
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
     @commands.cooldown(1, 5, commands.BucketType.user)
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     @commands.command()
-    async def track(self, ctx, region, *, riot_id):
+    async def track(self, ctx: commands.Context, region: str, *, riot_id: str) -> None:
         """Adds a user to the list of users tracked by the bot.
 
         Usage: !track <region> <riotid>
@@ -106,7 +106,7 @@ class Track(commands.Cog):
     @commands.cooldown(1, 5, commands.BucketType.user)
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     @commands.command()
-    async def untrack(self, ctx, *, riot_id):
+    async def untrack(self, ctx: commands.Context, *, riot_id: str) -> None:
         """Removes a user from the list of users tracked by the bot.
 
         Usage: !untrack <riotid>
@@ -136,5 +136,5 @@ class Track(commands.Cog):
             raise e
 
 
-async def setup(bot):
+async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Track(bot))

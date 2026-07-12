@@ -4,14 +4,14 @@ from discord.ext import commands
 class Admin(commands.Cog):
     """Handles bot administration."""
 
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
     @commands.has_permissions(manage_guild=True)
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     @commands.cooldown(1, 5, commands.BucketType.user)
     @commands.command(name="updateshere")
-    async def set_update_channel(self, ctx):
+    async def set_update_channel(self, ctx: commands.Context) -> None:
         """Defaults automatic rank updates to post in this channel.
 
         Usage: !updateshere
@@ -23,5 +23,5 @@ class Admin(commands.Cog):
         await ctx.send("Rank updates will now be posted in this channel")
 
 
-async def setup(bot):
+async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Admin(bot))

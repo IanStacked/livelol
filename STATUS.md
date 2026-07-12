@@ -2,8 +2,8 @@
 
 <!-- everythingdev:auto-continuity (auto-managed - regenerated each session; edit the sections below, not here) -->
 ## Continuity (auto)
-- Last active: 2026-07-10T21:30:41-07:00
-- Branch: `main` @ `929e9bc` "docs: seed TODO.md backlog with remote-slug and stale-status items"
+- Last active: 2026-07-11T23:24:39-07:00
+- Branch: `chore/complete-todos-2026-07-11` @ `2f0c14f` "docs: update STATUS.md narrative after complete-todos sweep"
 - Working tree: clean
 <!-- /everythingdev:auto-continuity -->
 **Phase:** Live / maintenance · **2026-07-11** · health: 🟢
@@ -18,13 +18,17 @@
   `scripts/heartbeat_check.py`.
 
 ## Now / in progress
-- Nothing mid-flight. leaguehelper is on the everythingdev standard, live, health green.
-  It can now be used as the testbed for everythingdev features (daily-report,
-  chief-of-staff, risk-score, the adversarial-review Stop-hook gate).
+- `/complete-todos` sweep done. Branch `chore/complete-todos-2026-07-11` ready (commits
+  `86d4fbf` cog type hints + `1ff38be` backlog bookkeeping). Adversarial-review PASS,
+  tests/lint/format green. NOT pushed - waiting on go-ahead to open the PR (merge deploys
+  to EC2). Only `command-type-hints` cleared the auto tier (T1); the other 7 TODO items
+  are T2/T3 and stay filed for a human.
 
 ## Next up
-- none pending. (Prior items cleared: the `Heartbeat task started` check already
-  exists in `ci.yml`; the git remote is already repointed to `IanStacked/livelol`.)
+- Get go-ahead, then open PR for `chore/complete-todos-2026-07-11` -> main and babysit the
+  CI/EC2 deploy to green.
+- 7 deferred TODO items remain (error-handling standardization, db_service SoC, two DB
+  migrations, LP streaks, dodge detection, non-solo/duo matches) - each wants a human.
 
 ## Blockers / needs me
 - none

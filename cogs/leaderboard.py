@@ -9,13 +9,13 @@ from utils.constants import RANK_ORDER, TIER_ORDER
 class Leaderboard(commands.Cog):
     """Handles bot leaderboard."""
 
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
     @commands.cooldown(1, 5, commands.BucketType.user)
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     @commands.command()
-    async def leaderboard(self, ctx):
+    async def leaderboard(self, ctx: commands.Context) -> None:
         """Prints the servers leaderboard.
 
         Usage: !leaderboard
@@ -73,5 +73,5 @@ class Leaderboard(commands.Cog):
         await ctx.send(embed=embed)
 
 
-async def setup(bot):
+async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Leaderboard(bot))
