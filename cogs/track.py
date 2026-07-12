@@ -4,7 +4,6 @@ from bot import RIOT_API_KEY
 from utils.constants import REGION_CLUSTERS
 from utils.exceptions import DatabaseError, UserNotFoundError
 from utils.helpers import parse_region, parse_riot_id
-from utils.logger_config import logger
 from utils.riot_api import get_puuid, get_ranked_info, get_summoner_info
 
 
@@ -43,7 +42,7 @@ class Track(commands.Cog):
         vn2 - Vietnam
         """
         if self.bot.db is None:
-            return await ctx.send("Database Error")
+            raise DatabaseError("The database is currently unavailable.")
         parsed_region = parse_region(region)
         if not parsed_region:
             return await ctx.send(
@@ -68,41 +67,39 @@ class Track(commands.Cog):
         username = parsed_riot_id[0]
         tagline = parsed_riot_id[1]
         riot_id = f"{username}#{tagline}"
-        try:
-            puuid = await get_puuid(self.bot.session, username, tagline, RIOT_API_KEY)
-            summoner_info = await get_summoner_info(
-                self.bot.session,
-                puuid,
-                parsed_region,
-                RIOT_API_KEY,
+        # Riot API / database errors raise typed LiveLOLError subclasses; the
+        # central on_command_error handler renders them for the user.
+        puuid = await get_puuid(self.bot.session, username, tagline, RIOT_API_KEY)
+        summoner_info = await get_summoner_info(
+            self.bot.session,
+            puuid,
+            parsed_region,
+            RIOT_API_KEY,
+        )
+        if not summoner_info:
+            raise UserNotFoundError(
+                f"Player {riot_id} was found, "
+                f"but they do not have a profile on {parsed_region}. "
+                "Please enter the users correct region. "
+                "List of valid regions: br1, eun1, euw1, jp1, kr, la1, la2, na1, "
+                "oc1, tr1, ru, ph2, sg2, th2, tw2, vn2, me1 "
+                "For more detailed information, use !help track.",
             )
-            if not summoner_info:
-                raise UserNotFoundError(
-                    f"Player {riot_id} was found, "
-                    f"but they do not have a profile on {parsed_region}. "
-                    "Please enter the users correct region. "
-                    "List of valid regions: br1, eun1, euw1, jp1, kr, la1, la2, na1, "
-                    "oc1, tr1, ru, ph2, sg2, th2, tw2, vn2, me1 "
-                    "For more detailed information, use !help track.",
-                )
-            ranked_data = await get_ranked_info(
-                self.bot.session,
-                puuid,
-                parsed_region,
-                RIOT_API_KEY,
-            )
-            await self.bot.db_service.track_user(
-                ctx.guild.id,
-                ctx.author.id,
-                riot_id,
-                puuid,
-                ranked_data,
-                parsed_region,
-            )
-            await ctx.send(f"{riot_id} is now being tracked!")
-        except DatabaseError as e:
-            logger.exception(f"Database write failed for {riot_id}: {e}")
-            raise e
+        ranked_data = await get_ranked_info(
+            self.bot.session,
+            puuid,
+            parsed_region,
+            RIOT_API_KEY,
+        )
+        await self.bot.db_service.track_user(
+            ctx.guild.id,
+            ctx.author.id,
+            riot_id,
+            puuid,
+            ranked_data,
+            parsed_region,
+        )
+        await ctx.send(f"{riot_id} is now being tracked!")
 
     @commands.cooldown(1, 5, commands.BucketType.user)
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
@@ -115,7 +112,7 @@ class Track(commands.Cog):
         "untracking" the user.
         """
         if self.bot.db is None:
-            return await ctx.send("Database Error")
+            raise DatabaseError("The database is currently unavailable.")
         parsed = parse_riot_id(riot_id)
         if not parsed:
             return await ctx.send(
@@ -124,17 +121,13 @@ class Track(commands.Cog):
         username = parsed[0]
         tagline = parsed[1]
         riot_id = f"{username}#{tagline}"
-        try:
-            puuid = await get_puuid(self.bot.session, username, tagline, RIOT_API_KEY)
-            await self.bot.db_service.untrack_user(
-                ctx.guild.id,
-                riot_id,
-                puuid,
-            )
-            await ctx.send(f"{riot_id} is no longer tracked")
-        except DatabaseError as e:
-            logger.exception(f"Database write failed for {riot_id}: {e}")
-            raise e
+        puuid = await get_puuid(self.bot.session, username, tagline, RIOT_API_KEY)
+        await self.bot.db_service.untrack_user(
+            ctx.guild.id,
+            riot_id,
+            puuid,
+        )
+        await ctx.send(f"{riot_id} is no longer tracked")
 
 
 async def setup(bot: commands.Bot) -> None:

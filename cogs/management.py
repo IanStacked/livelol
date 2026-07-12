@@ -18,7 +18,7 @@ class Management(commands.Cog):
         self,
         ctx: commands.Context,
         error: commands.CommandError,
-    ) -> None:
+    ) -> discord.Message | None:
         # Unwrap discord command error wrapper so we can access the original error.
         unwrapped_error = getattr(error, "original", error)
         if isinstance(unwrapped_error, commands.CommandNotFound):
@@ -47,10 +47,12 @@ class Management(commands.Cog):
         if isinstance(unwrapped_error, commands.BotMissingPermissions):
             perms = unwrapped_error.missing_permissions
             logger.warning(f"Bot missing perms in {ctx.guild.id}: {perms}")
+            # Best-effort DM; if we can't DM either, the error is still handled.
             with contextlib.suppress(discord.Forbidden):
-                return await ctx.author.send(
+                await ctx.author.send(
                     f"I'm missing permissions (**{perms}**) in **{ctx.guild.name}**!",
                 )
+            return None
         if isinstance(unwrapped_error, commands.MissingPermissions):
             return await ctx.send(
                 "You don't have permission to use this command.",
