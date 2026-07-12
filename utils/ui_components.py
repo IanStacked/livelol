@@ -5,6 +5,7 @@ import discord
 from discord.ext import commands
 
 from utils.constants import RANK_ORDER, TIER_ORDER
+from utils.helpers import streak_label
 from utils.links import deeplol_link, opgg_link
 from utils.logger_config import logger
 
@@ -58,7 +59,9 @@ class MyHelp(commands.MinimalHelpCommand):
 class MatchDetailsView(discord.ui.View):
     """A view that toggles between a simple rank update and a full match summary."""
 
-    def __init__(self, match_data, ranked_data, riot_id, puuid, region, timeout=259200):
+    def __init__(
+        self, match_data, ranked_data, riot_id, puuid, region, streak=0, timeout=259200
+    ):
         super().__init__(timeout=timeout)
         self.match_data = match_data
         self.ranked_data = ranked_data
@@ -67,6 +70,7 @@ class MatchDetailsView(discord.ui.View):
         self.message = None
         self.puuid = puuid
         self.region = region
+        self.streak = streak
         self.minimized_embed = self.create_minimized_embed()
         self.maximized_embed = self.create_maximized_embed()
         self.create_profile_buttons()
@@ -110,6 +114,9 @@ class MatchDetailsView(discord.ui.View):
             f"\n{self.match_data.get('target_champion')}"
             f" ({self.match_data.get('target_kda')})"
         )
+        streak_line = streak_label(self.streak)
+        if streak_line:
+            description += f"\n{streak_line}"
         embed = discord.Embed(
             title=f"Rank Update ({self.region})",
             description=description,

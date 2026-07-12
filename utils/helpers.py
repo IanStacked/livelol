@@ -2,6 +2,8 @@
 # If you notice a group of these functions having similar functionality,
 # make a separate file for them.
 
+from utils.constants import STREAK_DISPLAY_THRESHOLD
+
 
 def parse_rank_info(old_data, new_data):
     return {
@@ -62,8 +64,32 @@ def extract_match_info(match_dto, puuid):
         "target_kda": target_kda,
         "participants": participants,
         "win": win,
+        "match_id": match_dto.get("metadata", {}).get("matchId"),
     }
     return info
+
+
+def next_streak(previous_streak, win) -> int:
+    """Return the updated consecutive win/loss streak after a game.
+
+    The streak is a signed count: positive is a run of wins, negative a run of
+    losses. A win extends a win streak or resets a loss streak to +1; a loss
+    does the mirror. A missing/None previous streak is treated as 0.
+    """
+    previous_streak = previous_streak or 0
+    if win:
+        return (previous_streak if previous_streak > 0 else 0) + 1
+    return (previous_streak if previous_streak < 0 else 0) - 1
+
+
+def streak_label(streak) -> str | None:
+    """Return the display line for a streak, or None if below the threshold."""
+    streak = streak or 0
+    if streak >= STREAK_DISPLAY_THRESHOLD:
+        return f"🔥 {streak}-game win streak"
+    if streak <= -STREAK_DISPLAY_THRESHOLD:
+        return f"❄️ {abs(streak)}-game loss streak"
+    return None
 
 
 def parse_riot_id(unclean_riot_id):

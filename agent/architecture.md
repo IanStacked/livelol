@@ -37,7 +37,10 @@ Tracking a player and the live update loop:
    `tracked_users` Firestore collection (keyed by PUUID, tagged with `guild_ids`).
 4. `cogs/background.py background_update_task` loops: for each tracked user it fetches
    current ranked info, diffs against the stored tier/rank/LP (`utils/helpers`), and on
-   a change updates Firestore and fetches the most recent match (`get_recent_match_info`).
+   a change fetches the most recent match (`get_recent_match_info`), updates the
+   consecutive win/loss `streak` (only when the match id differs from the stored
+   `last_match_id`, so a no-new-game LP change doesn't double-count), then writes the
+   fresh tier/rank/LP + streak + last_match_id back to Firestore.
 5. `utils/ui_components.MatchDetailsView` builds the embed (minimized rank delta ↔
    maximized role-sorted team breakdown) and posts it to the guild's configured
    updates channel (set via `!updateshere`, stored in `guild_config`).

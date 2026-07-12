@@ -12,6 +12,8 @@ TIER_ORDER = {
     "UNRANKED": -1,
 }
 RANK_ORDER = {"I": 4, "II": 3, "III": 2, "IV": 1, "": 0}
+# A win/loss streak is only surfaced in an update once it reaches this length.
+STREAK_DISPLAY_THRESHOLD = 3
 REGION_CLUSTERS = {
     "na1": "americas",
     "br1": "americas",

@@ -13,6 +13,7 @@ from utils.exceptions import LiveLOLError
 from utils.helpers import (
     check_new_riot_id,
     extract_match_info,
+    next_streak,
     parse_rank_info,
     rank_difference,
 )
@@ -86,7 +87,6 @@ class Background(commands.Cog):
                     ranked_data = parse_rank_info(user, data)
                     if not rank_difference(ranked_data):
                         continue
-                    await self.bot.db_service.update_ranked_data(puuid, data)
                     match_info = await get_recent_match_info(
                         self.bot.session,
                         puuid,
@@ -94,6 +94,24 @@ class Background(commands.Cog):
                         RIOT_API_KEY,
                     )
                     processed_match_info = extract_match_info(match_info, puuid)
+                    if processed_match_info is None:
+                        logger.warning(
+                            f"⚠️ Skipping {riot_id} this cycle: no match info"
+                        )
+                        continue
+                    # Only a genuinely new game advances the win/loss streak. A
+                    # repeat match id (e.g. an LP change with no new game, like a
+                    # dodge) leaves the streak untouched so it isn't double-counted.
+                    match_id = processed_match_info.get("match_id")
+                    if match_id and match_id != user.get("last_match_id"):
+                        streak = next_streak(
+                            user.get("streak"), processed_match_info.get("win")
+                        )
+                    else:
+                        streak = user.get("streak") or 0
+                    data["streak"] = streak
+                    data["last_match_id"] = match_id
+                    await self.bot.db_service.update_ranked_data(puuid, data)
                     new_riot_id = check_new_riot_id(
                         processed_match_info,
                         puuid,
@@ -116,6 +134,7 @@ class Background(commands.Cog):
                             riot_id,
                             puuid,
                             region,
+                            streak,
                         )
                         initial_embed = view.create_minimized_embed()
                         message = await channel.send(embed=initial_embed, view=view)

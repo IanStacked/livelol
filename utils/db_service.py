@@ -73,7 +73,7 @@ class DatabaseService:
         return [doc.to_dict() for doc in docs]
 
     async def update_ranked_data(self, puuid, ranked_data):
-        """Persist fresh ranked info (tier/rank/LP) for a tracked user."""
+        """Persist fresh tracked-user fields (tier/rank/LP, streak, last match)."""
         doc_ref = self.db.collection(TRACKED_USERS_COLLECTION).document(puuid)
         doc_ref.update(ranked_data)
 
