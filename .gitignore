@@ -19,3 +19,8 @@ league_bot_key.pem
 # everythingdev internal (kept local, not published)
 TODO.md
 daily-reports/
+STATUS.md
+.claude/
+PROJECT.yaml
+bubble-ups/
+CLAUDE.md
