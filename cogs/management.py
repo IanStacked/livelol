@@ -10,7 +10,7 @@ from utils.logger_config import logger
 class Management(commands.Cog):
     """Handles bot command errors, cooldowns, and permissions."""
 
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
     @commands.Cog.listener()
@@ -18,7 +18,7 @@ class Management(commands.Cog):
         self,
         ctx: commands.Context,
         error: commands.CommandError,
-    ):
+    ) -> None:
         # Unwrap discord command error wrapper so we can access the original error.
         unwrapped_error = getattr(error, "original", error)
         if isinstance(unwrapped_error, commands.CommandNotFound):
@@ -65,12 +65,12 @@ class Management(commands.Cog):
         return await ctx.send("An unexpected error occurred.")
 
     @commands.Cog.listener()
-    async def on_guild_remove(self, guild: discord.Guild):
+    async def on_guild_remove(self, guild: discord.Guild) -> None:
         """Triggered when the bot is kicked from a server."""
         await self.bot.db_service.remove_guild_config(guild)
         await self.bot.db_service.untrack_all_users(guild)
         logger.info(f"Bot removed from guild: {guild.name} ({guild.id})")
 
 
-async def setup(bot):
+async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Management(bot))
