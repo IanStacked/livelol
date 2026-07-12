@@ -7,7 +7,6 @@ from bot import RIOT_API_KEY
 from database import (
     BOT_HEALTH_COLLECTION,
     HEARTBEAT_DOC,
-    TRACKED_USERS_COLLECTION,
 )
 from utils.constants import REGION_CLUSTERS
 from utils.exceptions import ServiceUnavailableError
@@ -68,14 +67,13 @@ class Background(commands.Cog):
         """Bot background update task."""
         try:
             logger.info("♻️ Starting background update loop")
-            docs = self.bot.db.collection(TRACKED_USERS_COLLECTION).stream()
-            doc_list = list(docs)
-            for doc in doc_list:
-                puuid = doc.get("puuid")
-                region = doc.get("region")
+            tracked_users = await self.bot.db_service.get_all_tracked_users()
+            for user in tracked_users:
+                puuid = user.get("puuid")
+                region = user.get("region")
                 cluster = REGION_CLUSTERS.get(region)
-                riot_id = doc.get("riot_id")
-                guild_ids = doc.get("guild_ids")
+                riot_id = user.get("riot_id")
+                guild_ids = user.get("guild_ids")
                 try:
                     data = await get_ranked_info(
                         self.bot.session,
@@ -85,10 +83,10 @@ class Background(commands.Cog):
                     )
                 except ServiceUnavailableError:
                     continue
-                ranked_data = parse_rank_info(doc, data)
+                ranked_data = parse_rank_info(user, data)
                 if not rank_difference(ranked_data):
                     continue
-                doc.reference.update(data)
+                await self.bot.db_service.update_ranked_data(puuid, data)
                 try:
                     match_info = await get_recent_match_info(
                         self.bot.session,

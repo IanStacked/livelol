@@ -67,8 +67,8 @@ class Management(commands.Cog):
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild) -> None:
         """Triggered when the bot is kicked from a server."""
-        await self.bot.db_service.remove_guild_config(guild)
-        await self.bot.db_service.untrack_all_users(guild)
+        await self.bot.db_service.remove_guild_config(guild.id)
+        await self.bot.db_service.untrack_all_users(guild.id)
         logger.info(f"Bot removed from guild: {guild.name} ({guild.id})")
 
 

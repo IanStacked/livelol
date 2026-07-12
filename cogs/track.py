@@ -92,7 +92,8 @@ class Track(commands.Cog):
                 RIOT_API_KEY,
             )
             await self.bot.db_service.track_user(
-                ctx,
+                ctx.guild.id,
+                ctx.author.id,
                 riot_id,
                 puuid,
                 ranked_data,
@@ -126,7 +127,7 @@ class Track(commands.Cog):
         try:
             puuid = await get_puuid(self.bot.session, username, tagline, RIOT_API_KEY)
             await self.bot.db_service.untrack_user(
-                ctx,
+                ctx.guild.id,
                 riot_id,
                 puuid,
             )

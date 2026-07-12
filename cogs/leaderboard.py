@@ -1,8 +1,6 @@
 import discord
 from discord.ext import commands
-from google.cloud.firestore import FieldFilter
 
-from database import TRACKED_USERS_COLLECTION
 from utils.constants import RANK_ORDER, TIER_ORDER
 
 
@@ -21,19 +19,11 @@ class Leaderboard(commands.Cog):
         Usage: !leaderboard
         Prints out the tracked users in order of rank from highest to lowest
         """
-        guild_id_str = str(ctx.guild.id)
-        # DB handling
-        docs = (
-            self.bot.db.collection(TRACKED_USERS_COLLECTION)
-            .where(filter=FieldFilter("guild_ids", "array_contains", guild_id_str))
-            .stream()
-        )
-        doc_list = list(docs)
-        if not doc_list:
+        tracked_users = await self.bot.db_service.get_guild_tracked_users(ctx.guild.id)
+        if not tracked_users:
             return await ctx.send("No users tracked in this server. Use !track.")
         leaderboard_data = []
-        for doc in doc_list:
-            data = doc.to_dict()
+        for data in tracked_users:
             leaderboard_data.append(
                 {
                     "name": data.get("riot_id"),
