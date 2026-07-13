@@ -54,16 +54,21 @@ def extract_match_info(match_dto, puuid):
     if not match_dto or "info" not in match_dto:
         return None
     participants = match_dto["info"].get("participants", [])
+    target = None
     for p in participants:
         if p.get("puuid") == puuid:
-            target_champion = p.get("championName")
-            target_kda = f"{p.get('kills')}/{p.get('deaths')}/{p.get('assists')}"
-            win = p.get("win")
+            target = p
+            break
+    if target is None:
+        # The tracked player is not in this match (e.g. a renamed/transferred
+        # account). Callers treat None as "skip this user for the cycle".
+        return None
+    kda = f"{target.get('kills')}/{target.get('deaths')}/{target.get('assists')}"
     info = {
-        "target_champion": target_champion,
-        "target_kda": target_kda,
+        "target_champion": target.get("championName"),
+        "target_kda": kda,
         "participants": participants,
-        "win": win,
+        "win": target.get("win"),
         "match_id": match_dto.get("metadata", {}).get("matchId"),
     }
     return info
