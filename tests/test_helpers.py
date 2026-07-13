@@ -84,3 +84,27 @@ def test_extract_match_info_includes_match_id():
     assert info["match_id"] == "NA1_123"
     assert info["win"] is True
     assert info["target_champion"] == "Ahri"
+
+
+def test_extract_match_info_target_absent():
+    match_dto = {
+        "metadata": {"matchId": "NA1_123"},
+        "info": {
+            "participants": [
+                {
+                    "puuid": "someone-else",
+                    "championName": "Ahri",
+                    "kills": 5,
+                    "deaths": 2,
+                    "assists": 7,
+                    "win": True,
+                },
+            ],
+        },
+    }
+    # The tracked puuid is not in the match: None, not an UnboundLocalError.
+    assert extract_match_info(match_dto, "abc") is None
+
+
+def test_extract_match_info_no_participants():
+    assert extract_match_info({"metadata": {}, "info": {}}, "abc") is None
