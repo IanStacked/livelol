@@ -67,7 +67,12 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/league-bot:latest
+          # Two tags from one build: :latest is what the box pulls, and an
+          # immutable :<commit-sha> so every deploy leaves a named rollback
+          # target. Rolling back = re-running a prior :<sha> (see README).
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/league-bot:latest
+            ${{ secrets.DOCKER_USERNAME }}/league-bot:${{ github.sha }}
           platforms: linux/amd64
       
       - name: Deploy to AWS EC2 and Verify Deployment
@@ -90,7 +95,9 @@ jobs:
             echo "ENV="production"" >> .env
             sudo docker stop my-bot || true
             sudo docker rm my-bot || true
-            sudo docker system prune -af
+            # Reclaim only dangling/untagged layers. NOT `system prune -af`,
+            # which would delete the :<sha> images that are our rollback targets.
+            sudo docker image prune -f
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/league-bot:latest
             sudo docker run -d \
               --restart always \

@@ -68,6 +68,35 @@ graph LR
     style External fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000000
 ```
 
+## Rollback
+Every merge to `main` deploys, and the deploy pushes two tags from one build:
+`league-bot:latest` (what the box pulls) and an immutable `league-bot:<commit-sha>`.
+Because the deploy prunes only dangling layers (not `system prune -af`), prior
+`<sha>` images stay on the EC2 host as rollback targets.
+
+To roll back to a known-good build, SSH to the EC2 host and run (the `.env` from
+the last deploy is already on disk; `<DOCKER_USER>` is the Docker Hub account):
+
+```bash
+# See which SHA-tagged images are available locally to roll back to:
+sudo docker images <DOCKER_USER>/league-bot
+
+sudo docker stop my-bot || true
+sudo docker rm my-bot || true
+sudo docker pull <DOCKER_USER>/league-bot:<good-sha>
+sudo docker run -d \
+  --restart always \
+  --env-file .env \
+  --name my-bot \
+  <DOCKER_USER>/league-bot:<good-sha>
+
+# Confirm it came up:
+sudo docker logs -f my-bot
+```
+
+To return to the tip, re-run the same block with `:latest` (or push a revert
+commit to `main`, which redeploys through CI).
+
 ## Preview
 The bot provides toggleable match summaries. Users can view a high-level rank update or expand the view to see the full role-sorted team breakdown. Includes region information.
 <table border="0">
