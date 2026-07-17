@@ -110,7 +110,12 @@ class Background(commands.Cog):
                     else:
                         streak = user.get("streak") or 0
                     data["streak"] = streak
-                    data["last_match_id"] = match_id
+                    # Never overwrite a good last_match_id with None: a match DTO
+                    # missing metadata.matchId yields match_id=None, and clobbering
+                    # it would make the next real game look "new" and double-count
+                    # the streak. Only advance the pointer on a real match id.
+                    if match_id:
+                        data["last_match_id"] = match_id
                     await self.bot.db_service.update_ranked_data(puuid, data)
                     new_riot_id = check_new_riot_id(
                         processed_match_info,

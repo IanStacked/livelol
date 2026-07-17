@@ -71,15 +71,16 @@ graph LR
 ## Rollback
 Every merge to `main` deploys, and the deploy pushes two tags from one build:
 `league-bot:latest` (what the box pulls) and an immutable `league-bot:<commit-sha>`.
-Because the deploy prunes only dangling layers (not `system prune -af`), prior
-`<sha>` images stay on the EC2 host as rollback targets.
+The box only ever pulls `:latest`, so it keeps no `<sha>` images locally - the old
+build goes dangling and gets pruned. The immutable `<sha>` tags live in the Docker
+Hub registry, and that registry is the rollback source.
 
 To roll back to a known-good build, SSH to the EC2 host and run (the `.env` from
 the last deploy is already on disk; `<DOCKER_USER>` is the Docker Hub account):
 
 ```bash
-# See which SHA-tagged images are available locally to roll back to:
-sudo docker images <DOCKER_USER>/league-bot
+# Pick a known-good <good-sha> from the Docker Hub tags for <DOCKER_USER>/league-bot
+# (the registry keeps every <sha>; the box does not) or from the CI run history.
 
 sudo docker stop my-bot || true
 sudo docker rm my-bot || true

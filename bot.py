@@ -145,7 +145,11 @@ async def update(ctx):
         else:
             streak = user.get("streak") or 0
         data["streak"] = streak
-        data["last_match_id"] = match_id
+        # Never overwrite a good last_match_id with None (see background.py): a
+        # match DTO missing metadata.matchId yields match_id=None, and clobbering
+        # it would make the next real game look "new" and double-count the streak.
+        if match_id:
+            data["last_match_id"] = match_id
         await bot.db_service.update_ranked_data(puuid, data)
         view = MatchDetailsView(
             processed_match_info,
