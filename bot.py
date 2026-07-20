@@ -19,6 +19,7 @@ from utils.helpers import (
 from utils.logger_config import logger
 from utils.riot_api import get_ranked_info, get_recent_match_info
 from utils.sentry_config import setup_sentry
+from utils.sink_config import setup_sink
 from utils.ui_components import MatchDetailsView, MyHelp
 
 # API Keys
@@ -27,9 +28,10 @@ load_dotenv()
 DISCORD_KEY = os.getenv("DISCORD_PUBLIC_KEY")
 RIOT_API_KEY = os.getenv("RIOT_API_KEY")
 
-# Sentry Initialization
+# Error tracking: Sentry + the owned error sink (dual-run; Sentry is cut last)
 
 setup_sentry()
+setup_sink()
 
 # Database Startup
 
