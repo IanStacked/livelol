@@ -23,7 +23,7 @@ to the guild's configured updates channel. It also serves an on-demand
 | `cogs/` | discord.py command groups: `track`, `leaderboard`, `admin`, `background`, `management` |
 | `utils/` | Riot API client, DB service, helpers, UI components, constants, logging, Sentry, exceptions, external links |
 | `tests/` | pytest suite (`test_helpers.py`, `test_riot_api.py`) |
-| `scripts/health.sh` | everythingdev health check (§4 JSON); see `PROJECT.yaml` |
+| `scripts/health.sh` | everythingdev health check (health JSON); see `PROJECT.yaml` |
 | `.github/workflows/` | CI (pytest) + deploy (Docker build → EC2) + Ruff lint |
 
 ## Task routing - read only what your task needs

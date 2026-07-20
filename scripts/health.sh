@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# health.sh for leaguehelper (LiveLOL) - SPEC-project-manifest §4 health contract.
+# health.sh for leaguehelper (LiveLOL) - the health contract in MANAGED-PROJECTS.md.
 #
 # Emits ONE JSON object on stdout: {liveness, services, errors, checked_at}.
-# The daily-report skill + chief-of-staff digest read `liveness` and the `errors` block.
+# The dashboard runs this live to render the project's health; nothing caches it.
 #
 # Config: PROJECT.yaml error_sink (kind: none here, so no sink query) + SINK_TOKEN env.
 # Liveness comes from the bot's Firestore heartbeat (cogs/background.py writes

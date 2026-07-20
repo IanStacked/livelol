@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Fill the SPEC-project-manifest §4 `errors` block from the sink's Query 1.
+"""Fill the health object's `errors` block from the sink's stats query.
 
-This is the seam SPEC-error-sink §9 describes: a project's `health.sh` calls
+This is the seam described in error-sink/README.md: a project's `health.sh` calls
 `GET /stats?project=<identity>&window=<W>` and copies `unhandled` / `handled_with_fix`
-into the §4 health object. Kept as its own stdlib helper so any `health.sh` (bash) can
+into the health object. Kept as its own stdlib helper so any `health.sh` (bash) can
 shell out to it without embedding curl+JSON reshaping.
 
-Degrade, don't fail: the sink is NOT a hard dependency (SPEC §1.4). If the ref is
+Degrade, don't fail: the sink is NOT a hard dependency. If the ref is
 missing or the sink is unreachable, emit the block with `null` counts - exactly the
 shape a `kind: none` project emits - so a sink outage degrades visibility without
 breaking a project's health check.
@@ -47,7 +47,7 @@ def fetch_stats(
 def errors_block(project: str, window: str, ref: str | None, token: str | None) -> dict:
     block = {"window": window, "unhandled": None, "handled_with_fix": None}
     if not ref or not token:
-        return block  # kind: none (or no token) -> nulls, a valid §4 object
+        return block  # kind: none (or no token) -> nulls, still a valid health object
     try:
         stats = fetch_stats(ref, token, project, window)
         block["unhandled"] = stats.get("unhandled")
@@ -58,7 +58,9 @@ def errors_block(project: str, window: str, ref: str | None, token: str | None) 
 
 
 def main(argv=None) -> int:
-    p = argparse.ArgumentParser(description="emit the §4 errors block from the sink")
+    p = argparse.ArgumentParser(
+        description="emit the health errors block from the sink"
+    )
     p.add_argument("--project", required=True)
     p.add_argument("--window", default="24h")
     p.add_argument("--ref", default=None, help="sink base URL (omit for kind: none)")

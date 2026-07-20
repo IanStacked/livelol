@@ -3,7 +3,7 @@
 
 The bot writes a `bot_health/heartbeat` doc every 60s (see `cogs/background.py`
 `heartbeat_task`). This reads that doc and maps its freshness to the
-SPEC-project-manifest §4 liveness word, then prints a small JSON object:
+everythingdev liveness word (MANAGED-PROJECTS.md), then prints a small JSON object:
 
     {"liveness": "green|degraded|down|unknown", "detail": "...", "age_seconds": N}
 
@@ -39,7 +39,7 @@ def _emit(liveness: str, detail: str, age: float | None = None) -> None:
 
 
 def classify_liveness(age_seconds: float, connected: bool) -> tuple[str, str]:
-    """Map heartbeat freshness + connection state to a §4 liveness word + detail.
+    """Map heartbeat freshness + connection state to a liveness word + detail.
 
     Pure and side-effect-free so it can be unit-tested without Firestore.
     Assumes a heartbeat doc with a valid `last_beat` exists (missing docs are
