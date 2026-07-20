@@ -1,8 +1,14 @@
 """Wire the owned error sink in beside Sentry (utils/sentry_config.py).
 
 A logging handler mirrors ERROR-level records to the sink, so the sink and Sentry
-capture the same events (dual-run; Sentry is cut last). Emission runs on a background
-thread via QueueListener - the POST must never block the Discord event loop.
+capture the same events (dual-run; Sentry is cut last).
+
+Threading: the event is BUILT on the logging thread (inside `emit`), where the
+record's `exc_info` is still intact, and only the finished event is handed to a
+background sender thread that does the blocking POST. The blocking I/O must never run
+on the Discord event loop. (Note: a stdlib QueueHandler cannot be used in front of the
+sink handler - QueueHandler.prepare() clears `record.exc_info`, which would erase the
+exception type and the handled flag before this handler ever sees them.)
 
 Fault semantics for the incident pipeline: a record carrying exception info is emitted
 as UNHANDLED (a real fault the incident poller should surface as a TODO finding); a
@@ -15,7 +21,7 @@ from __future__ import annotations
 import logging
 import os
 import queue
-from logging.handlers import QueueHandler, QueueListener
+import threading
 
 from utils.sink_client import SinkClient
 
@@ -26,18 +32,22 @@ SINK_PROJECT = "livelol"
 
 logger = logging.getLogger(__name__)
 
-_listener: QueueListener | None = None
+_worker: threading.Thread | None = None
 
 
 class SinkLoggingHandler(logging.Handler):
-    """Forward each emitted log record to the sink as one event."""
+    """Build a sink event from each ERROR record and enqueue it for the sender."""
 
-    def __init__(self, client: SinkClient) -> None:
+    def __init__(self, event_queue: queue.SimpleQueue, client: SinkClient) -> None:
         super().__init__(level=logging.ERROR)
+        self._queue = event_queue
         self._client = client
 
     def emit(self, record: logging.LogRecord) -> None:
-        """Build a sink event from the record and capture it."""
+        """Build the event here (exc_info is valid on this thread) and enqueue it.
+
+        Cheap and non-blocking - the blocking POST happens on the sender thread.
+        """
         try:
             exc_type = None
             if record.exc_info and record.exc_info[0] is not None:
@@ -52,9 +62,16 @@ class SinkLoggingHandler(logging.Handler):
                 handled=record.exc_info is None,
                 fingerprint=fingerprint,
             )
-            self._client.capture(event)
+            self._queue.put(event)
         except Exception:
             self.handleError(record)
+
+
+def _sender_loop(event_queue: queue.SimpleQueue, client: SinkClient) -> None:
+    """Drain built events and POST them off the event loop; capture never raises."""
+    while True:
+        event = event_queue.get()
+        client.capture(event)
 
 
 def setup_sink() -> SinkClient | None:
@@ -62,28 +79,26 @@ def setup_sink() -> SinkClient | None:
 
     No-op when SINK_URL / SINK_TOKEN are absent, mirroring the Sentry DSN-absent path.
     """
-    global _listener
+    global _worker
     url = os.getenv("SINK_URL")
     token = os.getenv("SINK_TOKEN")
     if not url or not token:
         logger.warning("⚠️ SINK_URL/SINK_TOKEN not set. Error sink is DISABLED.")
         return None
-    if _listener is not None:
+    if _worker is not None:
         return None  # already initialized
 
     client = SinkClient(base_url=url, token=token, project=SINK_PROJECT)
+    event_queue: queue.SimpleQueue = queue.SimpleQueue()
 
-    # QueueHandler enqueues ERROR+ records cheaply on the calling (event-loop) thread;
-    # the QueueListener drains them on a background thread where the blocking POST is
-    # safe. This is what keeps a sink round-trip off the Discord event loop.
-    log_queue: queue.SimpleQueue = queue.SimpleQueue()
-    q_handler = QueueHandler(log_queue)
-    q_handler.setLevel(logging.ERROR)
-    logging.getLogger().addHandler(q_handler)
-
-    _listener = QueueListener(
-        log_queue, SinkLoggingHandler(client), respect_handler_level=True
+    _worker = threading.Thread(
+        target=_sender_loop,
+        args=(event_queue, client),
+        name="sink-sender",
+        daemon=True,
     )
-    _listener.start()
+    _worker.start()
+
+    logging.getLogger().addHandler(SinkLoggingHandler(event_queue, client))
     logger.info("✅ Error sink emission initialized.")
     return client
