@@ -75,7 +75,7 @@ Tracking a player and the live update loop:
 `cogs/background.py` runs a second `tasks.loop` (`heartbeat_task`, every 60s) that
 writes `bot_health/heartbeat` to Firestore (`last_beat`, `connected`, `latency_ms`),
 guarded so a write failure never disrupts the bot. `scripts/heartbeat_check.py` reads
-that doc and maps freshness → the everythingdev §4 liveness word (green/degraded/down,
+that doc and maps freshness → the everythingdev liveness word (green/degraded/down,
 or unknown if it can't read); `scripts/health.sh` wraps it into the health JSON that
-`/daily-report` and the chief-of-staff digest consume. The pure `classify_liveness`
+the everythingdev dashboard renders. The pure `classify_liveness`
 threshold logic is unit-tested in `tests/test_heartbeat.py`.
