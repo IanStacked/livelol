@@ -40,7 +40,9 @@
   `except Exception` (log with traceback), so one player's Riot/DB failure never aborts
   the whole update cycle. The rate-limit `asyncio.sleep(1.5)` pacing is preserved.
 - Sentry captures `logger.error`/exceptions via `LoggingIntegration`
-  (`utils/sentry_config.py`). Logging an error at ERROR level ships it to Sentry.
+  (`utils/sentry_config.py`). Logging an error at ERROR level ships it to Sentry, and
+  the same records mirror to the owned error sink (`utils/sink_config.py`, dual-run;
+  Sentry is cut last). A record with exception info reaches the sink as unhandled.
 - Prefer specific `except <Type>` over bare `except`; the codebase logs with emoji
   prefixes (✅/❌/🛑/⚠️) for scannable startup/shutdown logs.
 
