@@ -17,11 +17,11 @@ to the guild's configured updates channel. It also serves an on-demand
 
 | Path | Purpose |
 |------|---------|
-| `bot.py` | Bot bootstrap: `MyBot`, env/Sentry/DB init, cog loader, the `!update` command |
+| `bot.py` | Bot bootstrap: `MyBot`, env/Sentry/sink/DB init, cog loader, the `!update` command |
 | `main.py` | Entrypoint - calls `bot_startup()` |
 | `database.py` | Firebase/Firestore init; collection-name constants |
 | `cogs/` | discord.py command groups: `track`, `leaderboard`, `admin`, `background`, `management` |
-| `utils/` | Riot API client, DB service, helpers, UI components, constants, logging, Sentry, exceptions, external links |
+| `utils/` | Riot API client, DB service, helpers, UI components, constants, logging, Sentry, owned error-sink client, exceptions, external links |
 | `tests/` | pytest suite (`test_helpers.py`, `test_riot_api.py`) |
 | `scripts/health.sh` | everythingdev health check (health JSON); see `PROJECT.yaml` |
 | `.github/workflows/` | CI (pytest) + deploy (Docker build → EC2) + Ruff lint |

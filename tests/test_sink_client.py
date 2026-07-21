@@ -89,6 +89,24 @@ def test_flush_quarantines_corrupt_line_and_replays_rest(tmp_path):
     assert quarantined == ["{not json"]
 
 
+def test_flush_quarantines_non_dict_json_line(tmp_path):
+    c = _client(tmp_path)
+    c._post = _raise_down
+    c.capture(c.build_event("A", "1"))
+    buf = tmp_path / "buffer.jsonl"
+    with buf.open("a") as fh:
+        fh.write("42\n")  # valid JSON, not an event object
+        fh.write('["list"]\n')
+
+    sent = []
+    c._post = lambda events: sent.extend(events)
+    assert c.flush() == 1
+    assert [e["type"] for e in sent] == ["A"]
+    assert buf.read_text().strip() == ""
+    quarantined = (tmp_path / "buffer.quarantine.jsonl").read_text().splitlines()
+    assert quarantined == ["42", '["list"]']
+
+
 def test_flush_clears_buffer_of_only_corrupt_lines(tmp_path):
     c = _client(tmp_path)
     buf = tmp_path / "buffer.jsonl"

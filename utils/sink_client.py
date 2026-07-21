@@ -85,9 +85,16 @@ class SinkClient:
             if not ln.strip():
                 continue
             try:
-                events.append(json.loads(ln))
+                parsed = json.loads(ln)
             except ValueError:
                 # one bad line must not wedge the whole drain; set it aside
+                corrupt.append(ln)
+                continue
+            if isinstance(parsed, dict):
+                events.append(parsed)
+            else:
+                # valid JSON but not an event object (e.g. "42") - the server would
+                # reject it and wedge the drain, so it goes to quarantine too
                 corrupt.append(ln)
         if not events and not corrupt:
             return 0

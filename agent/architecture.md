@@ -15,6 +15,8 @@ main.py
   └─ bot.py  (MyBot: intents, session, db_service)
        ├─ database.py ──────────► Firestore (tracked_users, guild_config)
        ├─ utils/sentry_config ──► Sentry.io (error/telemetry sink)
+       ├─ utils/sink_config ────► owned error sink (HTTPS, via utils/sink_client;
+       │                          dual-run beside Sentry - Sentry is cut last)
        └─ setup_hook loads cogs/:
             ├─ track.py        !track / !untrack        ─┐
             ├─ leaderboard.py  !leaderboard              │
@@ -57,6 +59,12 @@ Tracking a player and the live update loop:
   typed exceptions in `utils/exceptions.py`.
 - **`utils/exceptions.py`** - `LiveLOLError` hierarchy; `cogs/management.py` maps these
   to user-facing messages in `on_command_error`.
+- **`utils/sink_config.py` / `utils/sink_client.py`** - the owned error sink: a logging
+  handler mirrors ERROR-level records to a background sender thread that POSTs them to
+  the sink named by `SINK_URL`/`SINK_TOKEN` (no-op when unset), buffering offline
+  events to `.errors/buffer.jsonl` for replay. Runs beside Sentry (dual-run; Sentry is
+  cut last); records with exception info are emitted as unhandled, which is what the
+  everythingdev incident poller escalates.
 
 ## Key constraints
 
