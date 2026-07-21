@@ -70,6 +70,57 @@ def test_flush_replays_and_clears(tmp_path):
     assert (tmp_path / "buffer.jsonl").read_text().strip() == ""
 
 
+def test_flush_quarantines_corrupt_line_and_replays_rest(tmp_path):
+    c = _client(tmp_path)
+    c._post = _raise_down
+    c.capture(c.build_event("A", "1"))
+    buf = tmp_path / "buffer.jsonl"
+    with buf.open("a") as fh:
+        fh.write("{not json\n")
+    c.capture(c.build_event("B", "2"))
+
+    sent = []
+    c._post = lambda events: sent.extend(events)
+    replayed = c.flush()
+    assert replayed == 2
+    assert [e["type"] for e in sent] == ["A", "B"]
+    assert buf.read_text().strip() == ""
+    quarantined = (tmp_path / "buffer.quarantine.jsonl").read_text().splitlines()
+    assert quarantined == ["{not json"]
+
+
+def test_flush_clears_buffer_of_only_corrupt_lines(tmp_path):
+    c = _client(tmp_path)
+    buf = tmp_path / "buffer.jsonl"
+    buf.write_text("garbage one\ngarbage two\n")
+
+    def _fail(_):
+        raise AssertionError("nothing valid to post")
+
+    c._post = _fail
+    assert c.flush() == 0
+    assert buf.read_text().strip() == ""
+    quarantined = (tmp_path / "buffer.quarantine.jsonl").read_text().splitlines()
+    assert quarantined == ["garbage one", "garbage two"]
+
+
+def test_flush_keeps_buffer_and_quarantine_untouched_while_sink_down(tmp_path):
+    c = _client(tmp_path)
+    c._post = _raise_down
+    c.capture(c.build_event("A", "1"))
+    buf = tmp_path / "buffer.jsonl"
+    with buf.open("a") as fh:
+        fh.write("{not json\n")
+    before = buf.read_text()
+
+    c.capture(c.build_event("B", "2"))  # flush inside fails; must not lose lines
+    after = buf.read_text().splitlines()
+    assert before.splitlines() == after[:2]  # original lines intact, in order
+    assert len(after) == 3  # plus the newly buffered event
+    # quarantine only happens on a successful drain - no file while the sink is down
+    assert not (tmp_path / "buffer.quarantine.jsonl").exists()
+
+
 def test_buffer_bound_drops_oldest(tmp_path, monkeypatch):
     monkeypatch.setattr("utils.sink_client.BUFFER_MAX_LINES", 5)
     c = _client(tmp_path)

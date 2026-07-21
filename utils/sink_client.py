@@ -79,12 +79,26 @@ class SinkClient:
         if not self.buffer_path.exists():
             return 0
         lines = self.buffer_path.read_text(encoding="utf-8").splitlines()
-        events = [json.loads(ln) for ln in lines if ln.strip()]
-        if not events:
+        events: list[dict] = []
+        corrupt: list[str] = []
+        for ln in lines:
+            if not ln.strip():
+                continue
+            try:
+                events.append(json.loads(ln))
+            except ValueError:
+                # one bad line must not wedge the whole drain; set it aside
+                corrupt.append(ln)
+        if not events and not corrupt:
             return 0
         for start in range(0, len(events), BATCH_MAX):
             self._post(events[start : start + BATCH_MAX])
-        # every batch accepted -> safe to clear (the server dedups replays anyway)
+        # every batch accepted -> safe to clear (the server dedups replays anyway);
+        # corrupt lines move to a sidecar file so they stay inspectable, not lost
+        if corrupt:
+            quarantine = self.buffer_path.with_suffix(".quarantine.jsonl")
+            with quarantine.open("a", encoding="utf-8") as fh:
+                fh.write("\n".join(corrupt) + "\n")
         self.buffer_path.write_text("", encoding="utf-8")
         return len(events)
 
