@@ -82,16 +82,20 @@ jobs:
           RIOT_KEY: ${{ secrets.RIOT_API_KEY }}
           FIREBASE_CREDS: ${{ secrets.FIREBASE_CREDENTIALS_BASE64 }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-        with: 
+          SINK_URL: ${{ secrets.SINK_URL }}
+          SINK_TOKEN: ${{ secrets.SINK_TOKEN }}
+        with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: DISCORD_KEY, RIOT_KEY, FIREBASE_CREDS, SENTRY_DSN
+          envs: DISCORD_KEY, RIOT_KEY, FIREBASE_CREDS, SENTRY_DSN, SINK_URL, SINK_TOKEN
           script: |
             echo "DISCORD_PUBLIC_KEY=$DISCORD_KEY" > .env
             echo "RIOT_API_KEY=$RIOT_KEY" >> .env
             echo "FIREBASE_CREDENTIALS_BASE64=$FIREBASE_CREDS" >> .env
             echo "SENTRY_DSN=$SENTRY_DSN" >> .env
+            echo "SINK_URL=$SINK_URL" >> .env
+            echo "SINK_TOKEN=$SINK_TOKEN" >> .env
             echo "ENV="production"" >> .env
             sudo docker stop my-bot || true
             sudo docker rm my-bot || true
