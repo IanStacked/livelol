@@ -22,7 +22,7 @@ to the guild's configured updates channel. It also serves an on-demand
 | `database.py` | Firebase/Firestore init; collection-name constants |
 | `cogs/` | discord.py command groups: `track`, `leaderboard`, `admin`, `background`, `management` |
 | `utils/` | Riot API client, DB service, helpers, UI components, constants, logging, Sentry, owned error-sink client, exceptions, external links |
-| `tests/` | pytest suite (`test_helpers.py`, `test_riot_api.py`) |
+| `tests/` | pytest suite (`test_helpers.py`, `test_riot_api.py`, `test_heartbeat.py`, `test_sink_client.py`, `test_sink_config.py`, `test_update_command.py`) |
 | `scripts/health.sh` | everythingdev health check (health JSON); see `PROJECT.yaml` |
 | `.github/workflows/` | CI (pytest) + deploy (Docker build → EC2) + Ruff lint |
 
