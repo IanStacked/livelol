@@ -12,7 +12,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from utils.db_service import DatabaseService
-from utils.exceptions import DatabaseError
+from utils.exceptions import DatabaseError, UserNotFoundError
 
 
 def _make_doc(data):
@@ -68,6 +68,38 @@ async def test_untrack_user_deletes_doc_when_last_guild_removed():
 async def test_untrack_user_missing_guild_raises_user_not_found():
     data = {"guild_ids": ["222"], "server_info": {"222": {"added_by": 2}}}
     service, doc_ref = _make_service(data)
+
+    with pytest.raises(UserNotFoundError):
+        await service.untrack_user(guild_id=111, riot_id="Foo#NA1", puuid="p1")
+
+    doc_ref.set.assert_not_called()
+    doc_ref.delete.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_untrack_user_no_such_doc_raises_user_not_found():
+    doc_ref = MagicMock()
+    missing_doc = MagicMock()
+    missing_doc.exists = False
+    doc_ref.get.return_value = missing_doc
+    db = MagicMock()
+    db.collection.return_value.document.return_value = doc_ref
+    service = DatabaseService(db)
+
+    with pytest.raises(UserNotFoundError):
+        await service.untrack_user(guild_id=111, riot_id="Foo#NA1", puuid="p1")
+
+    doc_ref.set.assert_not_called()
+    doc_ref.delete.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_untrack_user_wraps_unexpected_error_as_database_error():
+    doc_ref = MagicMock()
+    doc_ref.get.side_effect = RuntimeError("firestore unavailable")
+    db = MagicMock()
+    db.collection.return_value.document.return_value = doc_ref
+    service = DatabaseService(db)
 
     with pytest.raises(DatabaseError):
         await service.untrack_user(guild_id=111, riot_id="Foo#NA1", puuid="p1")

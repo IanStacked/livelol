@@ -153,6 +153,8 @@ class DatabaseService:
                 data["guild_ids"] = guild_list
                 data.get("server_info", {}).pop(guild_id_str, None)
                 doc_ref.set(data)
+        except UserNotFoundError:
+            raise
         except Exception as e:
             logger.exception(f"❌ ERROR: untracking: {e}")
             raise DatabaseError(f"Database write failed for player {riot_id}.") from e
