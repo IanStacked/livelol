@@ -35,8 +35,8 @@ class Management(commands.Cog):
             embed = discord.Embed(
                 title="Slow Down!",
                 description=(
-                    f"You're using '{ctx.command}' too fast. \
-                    Try again in {round(error.retry_after, 2)}s."
+                    f"You're using '{ctx.command}' too fast. "
+                    f"Try again in {round(error.retry_after, 2)}s."
                 ),
                 color=discord.Color.orange(),
             )

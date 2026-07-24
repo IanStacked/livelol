@@ -68,8 +68,9 @@ jobs:
           context: .
           push: true
           # Two tags from one build: :latest is what the box pulls, and an
-          # immutable :<commit-sha> so every deploy leaves a named rollback
-          # target. Rolling back = re-running a prior :<sha> (see README).
+          # immutable :<commit-sha> pushed to the registry as the rollback
+          # target - the box itself never keeps it (see README). Rolling
+          # back = re-running a prior :<sha> from the registry.
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/league-bot:latest
             ${{ secrets.DOCKER_USERNAME }}/league-bot:${{ github.sha }}
@@ -99,8 +100,9 @@ jobs:
             echo "ENV="production"" >> .env
             sudo docker stop my-bot || true
             sudo docker rm my-bot || true
-            # Reclaim only dangling/untagged layers. NOT `system prune -af`,
-            # which would delete the :<sha> images that are our rollback targets.
+            # Reclaim only dangling/untagged layers. The box only ever pulls
+            # :latest, so no :<sha> image lives here to lose either way -
+            # the :<sha> rollback targets live in the registry, not on this host.
             sudo docker image prune -f
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/league-bot:latest
             sudo docker run -d \
