@@ -99,7 +99,7 @@ class DatabaseService:
                     doc_ref.delete()
                 else:
                     data["guild_ids"] = guild_list
-                    del data[f"server_info.{guild_id_str}"]
+                    data.get("server_info", {}).pop(guild_id_str, None)
                     doc_ref.set(data)
         except Exception as e:
             logger.exception(
@@ -151,7 +151,7 @@ class DatabaseService:
                 doc_ref.delete()
             else:
                 data["guild_ids"] = guild_list
-                del data[f"server_info.{guild_id_str}"]
+                data.get("server_info", {}).pop(guild_id_str, None)
                 doc_ref.set(data)
         except Exception as e:
             logger.exception(f"❌ ERROR: untracking: {e}")
