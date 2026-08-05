@@ -45,6 +45,48 @@ def test_exception_log_through_logger_is_unhandled_with_exc_type(tmp_path):
     assert ev["fingerprint"].endswith(":ValueError")
 
 
+def test_discord_gateway_reconnect_log_is_handled(tmp_path):
+    q = queue.SimpleQueue()
+    client = SinkClient("http://x", "t", "livelol", buffer_path=str(tmp_path / "b"))
+    log = logging.getLogger("discord.client")
+    log.handlers.clear()
+    log.addHandler(SinkLoggingHandler(q, client))
+    log.setLevel(logging.ERROR)
+    log.propagate = False
+    try:
+        raise OSError("connection reset")
+    except OSError:
+        log.exception("Attempting a reconnect in %.2fs", 0.96)
+    ev = q.get_nowait()
+    assert ev["handled"] is True
+
+
+def test_discord_client_logger_other_message_still_unhandled(tmp_path):
+    q = queue.SimpleQueue()
+    client = SinkClient("http://x", "t", "livelol", buffer_path=str(tmp_path / "b"))
+    log = logging.getLogger("discord.client")
+    log.handlers.clear()
+    log.addHandler(SinkLoggingHandler(q, client))
+    log.setLevel(logging.ERROR)
+    log.propagate = False
+    try:
+        raise ValueError("boom")
+    except ValueError:
+        log.error("unrelated failure", exc_info=True)
+    ev = q.get_nowait()
+    assert ev["handled"] is False
+
+
+def test_reconnect_message_from_other_logger_still_unhandled(tmp_path):
+    log, q = _wired_logger(tmp_path)
+    try:
+        raise OSError("connection reset")
+    except OSError:
+        log.exception("Attempting a reconnect in %.2fs", 0.96)
+    ev = q.get_nowait()
+    assert ev["handled"] is False
+
+
 def test_setup_sink_is_noop_without_env(monkeypatch):
     monkeypatch.delenv("SINK_URL", raising=False)
     monkeypatch.delenv("SINK_TOKEN", raising=False)
