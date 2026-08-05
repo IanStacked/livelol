@@ -14,6 +14,9 @@ Fault semantics for the incident pipeline: a record carrying exception info is e
 as UNHANDLED (a real fault the incident poller should surface as a TODO finding); a
 plain error log with no exception is emitted as handled. The poller only escalates
 unhandled groups, so this is what decides which logs become auto-fix candidates.
+A short named list of confirmed-benign third-party logs (`_is_benign_third_party_retry`)
+is emitted as handled despite carrying exc_info - see that function for the one
+current entry and why it stays narrow.
 """
 
 from __future__ import annotations
@@ -33,6 +36,19 @@ SINK_PROJECT = "livelol"
 logger = logging.getLogger(__name__)
 
 _worker: threading.Thread | None = None
+
+# discord.py's own gateway-reconnect log (discord/client.py:781, logger
+# "discord.client") is a routine, self-healing retry loop, not a livelol fault -
+# exclude only this confirmed case rather than any broader library-name filter
+# (fleet TODO.md sink-classifier-noise-third-party-retry-logs, decided 2026-08-04).
+_BENIGN_LOGGER = "discord.client"
+_BENIGN_MESSAGE_PREFIX = "Attempting a reconnect in"
+
+
+def _is_benign_third_party_retry(record: logging.LogRecord) -> bool:
+    return record.name == _BENIGN_LOGGER and record.getMessage().startswith(
+        _BENIGN_MESSAGE_PREFIX
+    )
 
 
 class SinkLoggingHandler(logging.Handler):
@@ -59,7 +75,7 @@ class SinkLoggingHandler(logging.Handler):
             event = self._client.build_event(
                 type_,
                 record.getMessage(),
-                handled=record.exc_info is None,
+                handled=record.exc_info is None or _is_benign_third_party_retry(record),
                 fingerprint=fingerprint,
             )
             self._queue.put(event)
