@@ -4,7 +4,10 @@
 # Emits ONE JSON object on stdout: {liveness, services, errors, checked_at}.
 # The dashboard runs this live to render the project's health; nothing caches it.
 #
-# Config: PROJECT.yaml error_sink (kind: self-hosted - the owned sink) + SINK_TOKEN env.
+# The error sink died with the EC2 host on 2026-09-28; SINK_REF defaults empty now,
+# which the errors block below treats as null-safe (kind: none -> nulls).
+#
+# Config: PROJECT.yaml error_sink (kind: none, sink dead) + SINK_TOKEN env, unused while empty.
 # Liveness comes from the bot's Firestore heartbeat (cogs/background.py writes
 # bot_health/heartbeat every 60s; scripts/heartbeat_check.py reads it). If the check
 # can't run (no uv/creds/network) liveness degrades to `unknown` - never a faked green.
@@ -12,7 +15,7 @@ set -euo pipefail
 
 PROJECT="${PROJECT:-livelol}"
 WINDOW="${WINDOW:-24h}"
-SINK_REF="${SINK_REF:-https://livelolsink.duckdns.org}"   # PROJECT.yaml error_sink.ref; set empty to skip the sink query
+SINK_REF="${SINK_REF:-}"   # PROJECT.yaml error_sink.ref; empty (default) skips the sink query
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # --- errors block (null-safe; kind: none -> nulls) ----------------------------
