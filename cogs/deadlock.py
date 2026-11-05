@@ -101,6 +101,9 @@ class Deadlock(commands.Cog):
         try:
             logger.info("♻️ Starting Deadlock update loop")
             tracked_users = await self.dl_db.get_all_tracked_users()
+            # Cycle-local: each distinct guild's config is read at most once per
+            # cycle, filled lazily so guilds with no new match cost no read.
+            channel_cache = {}
             for user in tracked_users:
                 account_id = user.get("account_id")
                 guild_ids = user.get("guild_ids") or []
@@ -127,10 +130,11 @@ class Deadlock(commands.Cog):
                         )
                         for entry in fresh
                     ]
-                    # One config read per guild per player, not per match.
-                    channel_ids = {
-                        guild: await self._channel_id(guild) for guild in guild_ids
-                    }
+                    channel_ids = {}
+                    for guild in guild_ids:
+                        if guild not in channel_cache:
+                            channel_cache[guild] = await self._channel_id(guild)
+                        channel_ids[guild] = channel_cache[guild]
                     # Deliberately written before the guild-send loop: a failed send
                     # is a silent, non-retried miss rather than a duplicate later.
                     await self.dl_db.update_player_data(

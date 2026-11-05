@@ -104,6 +104,12 @@ async def test_get_match_history_429_uses_fallback_body():
 
 
 @pytest.mark.asyncio
+async def test_get_match_history_non_list_body_raises():
+    with pytest.raises(DeadlockAPIError):
+        await get_match_history(_session(200, {"error": "nope"}), 42)
+
+
+@pytest.mark.asyncio
 async def test_get_match_history_error_status_raises():
     with pytest.raises(DeadlockAPIError):
         await get_match_history(_session(500, None), 42)
@@ -457,6 +463,38 @@ async def test_loop_reads_each_guild_config_once_per_player(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_loop_reads_each_guild_config_once_per_cycle(monkeypatch):
+    users = [
+        {"account_id": i, "guild_ids": ["111"], "last_match_id": 10}
+        for i in range(1, 21)
+    ]
+    users[0]["guild_ids"] = ["111", "222"]
+    cog, channel = _cog(users)
+    await _run_loop(cog, [_entry(11)], monkeypatch)
+    assert channel.send.await_count == 21
+    assert cog.bot.db_service.get_guild_config.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_loop_guild_config_read_error_skips_guild(monkeypatch):
+    user = {"account_id": 42, "guild_ids": ["111"], "last_match_id": 10}
+    cog, channel = _cog([user])
+    cog.bot.db_service.get_guild_config = AsyncMock(side_effect=RuntimeError("x"))
+    await _run_loop(cog, [_entry(20)], monkeypatch)
+    channel.send.assert_not_awaited()
+    cog.dl_db.update_player_data.assert_awaited_once_with(42, {"last_match_id": 20})
+
+
+@pytest.mark.asyncio
+async def test_loop_deleted_channel_posts_nothing(monkeypatch):
+    user = {"account_id": 42, "guild_ids": ["111"], "last_match_id": 10}
+    cog, channel = _cog([user], last_channel=False)
+    await _run_loop(cog, [_entry(20)], monkeypatch)
+    cog.bot.get_channel.assert_called_once_with(10)
+    channel.send.assert_not_awaited()
+
+
+@pytest.mark.asyncio
 async def test_loop_hero_lookup_error_leaves_pointer_unmoved(monkeypatch):
     user = {"account_id": 42, "guild_ids": ["111"], "last_match_id": 10}
     cog, channel = _cog([user])
@@ -558,3 +596,13 @@ async def test_untrackdl_calls_service():
     cog.dl_db.untrack_user = AsyncMock()
     await Deadlock.untrackdl.callback(cog, _ctx(), "42")
     cog.dl_db.untrack_user.assert_awaited_once_with(111, 42)
+
+
+@pytest.mark.asyncio
+async def test_untrackdl_bad_id_is_rejected_without_db_call():
+    cog, _ = _cog([])
+    cog.dl_db.untrack_user = AsyncMock()
+    ctx = _ctx()
+    await Deadlock.untrackdl.callback(cog, ctx, "notanumber")
+    cog.dl_db.untrack_user.assert_not_awaited()
+    assert "Invalid input" in ctx.send.await_args.args[0]
