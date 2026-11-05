@@ -263,3 +263,25 @@ class DeadlockDatabaseService:
             raise DatabaseError(
                 f"Database operation failed for guild {guild_id}: {e}",
             ) from e
+
+    async def get_channel_id(self, guild_id):
+        """The guild's configured channel id, or None when no config doc exists.
+
+        Unlike DatabaseService.get_guild_config, a read error RAISES DatabaseError
+        rather than returning None, so the loop can tell "no channel set" (skip the
+        guild) from "read failed" (retry the player next cycle).
+        """
+        try:
+            config = (
+                self.db.collection(GUILD_CONFIG_COLLECTION)
+                .document(str(guild_id))
+                .get()
+            )
+            if config.exists:
+                return config.get("channel_id")
+            return None
+        except Exception as e:
+            logger.exception(f"❌ ERROR: reading channel config for {guild_id}: {e}")
+            raise DatabaseError(
+                f"Database read failed for guild config {guild_id}."
+            ) from e

@@ -7,6 +7,7 @@ import pytest
 
 from cogs import deadlock as deadlock_cog
 from cogs.deadlock import Deadlock, parse_account_id
+from database import GUILD_CONFIG_COLLECTION
 from utils import deadlock_api
 from utils.db_service import (
     DEADLOCK_TRACKED_USERS_COLLECTION,
@@ -270,6 +271,30 @@ async def test_update_player_data_updates_doc_keyed_by_str_account_id():
 
 
 @pytest.mark.asyncio
+async def test_get_channel_id_reads_guild_config():
+    service, doc_ref, db = _service({"channel_id": 55})
+    doc_ref.get.return_value.get.return_value = 55
+    assert await service.get_channel_id(111) == 55
+    db.collection.assert_called_once_with(GUILD_CONFIG_COLLECTION)
+    db.collection.return_value.document.assert_called_once_with("111")
+    doc_ref.get.return_value.get.assert_called_once_with("channel_id")
+
+
+@pytest.mark.asyncio
+async def test_get_channel_id_none_when_no_config_doc():
+    service, _, _ = _service(None)
+    assert await service.get_channel_id(111) is None
+
+
+@pytest.mark.asyncio
+async def test_get_channel_id_raises_on_read_error():
+    service, doc_ref, _ = _service(None)
+    doc_ref.get.side_effect = RuntimeError("down")
+    with pytest.raises(DatabaseError):
+        await service.get_channel_id(111)
+
+
+@pytest.mark.asyncio
 async def test_track_user_second_server_does_not_rewind_pointer():
     service, doc_ref, _ = _service({"last_match_id": 400, "guild_ids": ["222"]})
     await service.track_user(111, 9, 42, 500)
@@ -367,11 +392,11 @@ def test_parse_account_id():
 def _cog(users, last_channel=True):
     cog = object.__new__(Deadlock)
     cog.bot = MagicMock()
-    cog.bot.db_service.get_guild_config = AsyncMock(return_value=10)
     channel = MagicMock()
     channel.send = AsyncMock()
     cog.bot.get_channel.return_value = channel if last_channel else None
     cog.dl_db = MagicMock()
+    cog.dl_db.get_channel_id = AsyncMock(return_value=10)
     cog.dl_db.get_all_tracked_users = AsyncMock(return_value=users)
     cog.dl_db.update_player_data = AsyncMock()
     return cog, channel
@@ -448,7 +473,7 @@ async def test_loop_api_error_for_one_player_does_not_abort_cycle(monkeypatch):
 async def test_loop_guild_without_channel_config_is_skipped(monkeypatch):
     user = {"account_id": 42, "guild_ids": ["111"], "last_match_id": 10}
     cog, channel = _cog([user])
-    cog.bot.db_service.get_guild_config = AsyncMock(return_value=None)
+    cog.dl_db.get_channel_id = AsyncMock(return_value=None)
     await _run_loop(cog, [_entry(20)], monkeypatch)
     channel.send.assert_not_awaited()
 
@@ -459,7 +484,7 @@ async def test_loop_reads_each_guild_config_once_per_player(monkeypatch):
     cog, channel = _cog([user])
     await _run_loop(cog, [_entry(i) for i in range(11, 16)], monkeypatch)
     assert channel.send.await_count == 10
-    assert cog.bot.db_service.get_guild_config.await_count == 2
+    assert cog.dl_db.get_channel_id.await_count == 2
 
 
 @pytest.mark.asyncio
@@ -472,17 +497,48 @@ async def test_loop_reads_each_guild_config_once_per_cycle(monkeypatch):
     cog, channel = _cog(users)
     await _run_loop(cog, [_entry(11)], monkeypatch)
     assert channel.send.await_count == 21
-    assert cog.bot.db_service.get_guild_config.await_count == 2
+    assert cog.dl_db.get_channel_id.await_count == 2
 
 
 @pytest.mark.asyncio
-async def test_loop_guild_config_read_error_skips_guild(monkeypatch):
+async def test_loop_guild_config_read_error_holds_player(monkeypatch):
     user = {"account_id": 42, "guild_ids": ["111"], "last_match_id": 10}
     cog, channel = _cog([user])
-    cog.bot.db_service.get_guild_config = AsyncMock(side_effect=RuntimeError("x"))
+    cog.dl_db.get_channel_id = AsyncMock(side_effect=DatabaseError("x"))
     await _run_loop(cog, [_entry(20)], monkeypatch)
     channel.send.assert_not_awaited()
-    cog.dl_db.update_player_data.assert_awaited_once_with(42, {"last_match_id": 20})
+    cog.dl_db.update_player_data.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_loop_shared_guild_read_error_holds_all_then_posts_next_cycle(
+    monkeypatch,
+):
+    users = [
+        {"account_id": i, "guild_ids": ["111"], "last_match_id": 10}
+        for i in range(1, 4)
+    ]
+    cog, channel = _cog(users)
+    cog.dl_db.get_channel_id = AsyncMock(side_effect=[DatabaseError("x"), 10])
+    await _run_loop(cog, [_entry(20)], monkeypatch)
+    assert cog.dl_db.get_channel_id.await_count == 1
+    channel.send.assert_not_awaited()
+    cog.dl_db.update_player_data.assert_not_awaited()
+    # Next cycle: fresh cache, the read is retried and all three post.
+    await _run_loop(cog, [_entry(20)], monkeypatch)
+    assert cog.dl_db.get_channel_id.await_count == 2
+    assert channel.send.await_count == 3
+    assert cog.dl_db.update_player_data.await_count == 3
+
+
+@pytest.mark.asyncio
+async def test_loop_one_failed_guild_holds_multi_guild_player(monkeypatch):
+    user = {"account_id": 42, "guild_ids": ["111", "222"], "last_match_id": 10}
+    cog, channel = _cog([user])
+    cog.dl_db.get_channel_id = AsyncMock(side_effect=[10, DatabaseError("x")])
+    await _run_loop(cog, [_entry(20)], monkeypatch)
+    channel.send.assert_not_awaited()
+    cog.dl_db.update_player_data.assert_not_awaited()
 
 
 @pytest.mark.asyncio

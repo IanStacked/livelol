@@ -15,6 +15,10 @@ from utils.deadlock_ui import DeadlockMatchView
 from utils.exceptions import DatabaseError, LiveLOLError
 from utils.logger_config import logger
 
+# Cached for a guild whose config read failed this cycle: distinct from None,
+# which means the guild has no channel set.
+_READ_FAILED = object()
+
 
 def parse_account_id(raw):
     """Steam account id (SteamID3) as a positive int, or None.
@@ -135,6 +139,16 @@ class Deadlock(commands.Cog):
                         if guild not in channel_cache:
                             channel_cache[guild] = await self._channel_id(guild)
                         channel_ids[guild] = channel_cache[guild]
+                    # The pointer is per player, so one failed guild read holds the
+                    # whole player (no pointer, no posts); the matches go out next
+                    # cycle, when the cache is fresh and the read is retried.
+                    if any(c is _READ_FAILED for c in channel_ids.values()):
+                        logger.warning(
+                            f"⚠️ Holding Deadlock {account_id} this cycle: "
+                            "guild config read failed"
+                        )
+                        await asyncio.sleep(1.5)
+                        continue
                     # Deliberately written before the guild-send loop: a failed send
                     # is a silent, non-retried miss rather than a duplicate later.
                     await self.dl_db.update_player_data(
@@ -155,12 +169,12 @@ class Deadlock(commands.Cog):
             logger.exception(f"❌ ERROR: {e}")
 
     async def _channel_id(self, guild):
-        """The guild's configured channel id, or None (also on a read error)."""
+        """The guild's channel id, None when none is set, _READ_FAILED on error."""
         try:
-            return await self.bot.db_service.get_guild_config(guild)
+            return await self.dl_db.get_channel_id(guild)
         except Exception as e:
             logger.exception(f"❌ ERROR reading channel config for {guild}: {e}")
-            return None
+            return _READ_FAILED
 
     async def _announce(self, guild, channel_id, entry, hero_name, account_id):
         """Post one match to one guild; a failure there never blocks other guilds."""
