@@ -80,10 +80,13 @@ known false alarm the kit-rendered file cannot carry an allow marker for (everyt
 Secrets (`DISCORD_PUBLIC_KEY`, `RIOT_API_KEY`, `FIREBASE_CREDENTIALS_BASE64`) are read from
 `~/.secrets.sh` at start and never written into a unit file. A merge to `main` runs tests,
 lint and a no-push Docker build, and deploys nothing: updating the running bot is a
-`git pull` plus `systemctl --user restart livelol-bot`.
+`git pull`, then `uv sync` when the pull changed `pyproject.toml` or `uv.lock` (the unit runs
+from the project's `.venv`), then `systemctl --user restart livelol-bot`.
 
-Undo: `systemctl --user disable --now livelol-bot.service`, then remove the unit's links under
-`~/.config/systemd/user` and its `[units.livelol-bot]` table in everythingdev's `deploy/ports.toml`.
+Undo: `systemctl --user disable --now livelol-bot.service`; remove the unit's links under
+`~/.config/systemd/user` (the service and its `livelol-bot.service.d/` drop-in folder); delete
+`deploy/livelol-bot.service` and `deploy/livelol-bot.service.d/`; remove its `[units.livelol-bot]`
+table in everythingdev's `deploy/ports.toml`; then `systemctl --user daemon-reload`.
 
 ## Preview
 The bot provides toggleable match summaries. Users can view a high-level rank update or expand the view to see the full role-sorted team breakdown. Includes region information.
