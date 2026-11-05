@@ -74,6 +74,9 @@ that host down on 2026-09-28. It is hosted again on the operator's home server a
 systemd user unit, `livelol-bot`, memory-capped at 256 MB. The unit file is
 `deploy/livelol-bot.service` plus a drop-in in `deploy/livelol-bot.service.d/`; both are
 rendered by everythingdev's `lib/host_unit.py` (re-run its install rather than editing them).
+The drop-in names secret variables and holds no values; a diffgate `secret-leak` hit on it is a
+known false alarm the kit-rendered file cannot carry an allow marker for (everythingdev finding
+1793877530963-2da036).
 Secrets (`DISCORD_PUBLIC_KEY`, `RIOT_API_KEY`, `FIREBASE_CREDENTIALS_BASE64`) are read from
 `~/.secrets.sh` at start and never written into a unit file. A merge to `main` runs tests,
 lint and a no-push Docker build, and deploys nothing: updating the running bot is a
