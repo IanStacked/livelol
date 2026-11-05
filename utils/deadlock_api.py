@@ -6,7 +6,9 @@ https://api.deadlock-api.com/openapi.json), operation ``match_history``.
 GET /v1/players/{account_id}/match-history returns the stored history (ranked and
 normal matches together, newest first). Stored history is limited to 100 req/s per
 IP. ``force_refetch=true`` is limited to 1 req/h per IP (10 req/h globally), so this
-module never sends it. A 429 still carries the stored history as a fallback body.
+module never sends it. These limits are as read from
+https://api.deadlock-api.com/openapi.json (operation ``match_history``) on 2026-11-05.
+A 429 still carries the stored history as a fallback body.
 
 "As it ends" means as this API ingests the match, which can lag the real end.
 """

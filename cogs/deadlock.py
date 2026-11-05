@@ -125,8 +125,8 @@ class Deadlock(commands.Cog):
                                 )
                         await asyncio.sleep(1.5)
                         continue
-                    # Hero names are resolved before the pointer moves, so a failed
-                    # lookup skips this cycle instead of losing the matches for good.
+                    # Hero names are resolved before the pointer moves. get_hero_name
+                    # never raises: a failed lookup falls back to a "Hero #id" label.
                     named = [
                         (
                             entry,
@@ -142,6 +142,9 @@ class Deadlock(commands.Cog):
                     # The pointer is per player, so one failed guild read holds the
                     # whole player (no pointer, no posts); the matches go out next
                     # cycle, when the cache is fresh and the read is retried.
+                    # Trade-off: a guild read that fails every cycle holds that player,
+                    # healthy guilds included, every cycle with a warning. The matches
+                    # are retried, and the 5-match cap logs whatever it drops.
                     if any(c is _READ_FAILED for c in channel_ids.values()):
                         logger.warning(
                             f"⚠️ Holding Deadlock {account_id} this cycle: "
