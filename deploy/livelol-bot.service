@@ -1,0 +1,37 @@
+# livelol-bot - a small personal service hosted as a USER-LEVEL systemd unit.
+#
+# RENDERED by `python3 lib/host_unit.py install` (header of that file says how); do not edit the
+# copy by hand, re-run the command - the runtime path below is resolved from the project's
+# mise.toml at install time and a re-run rewrites it after a mise upgrade.
+# Binds nothing itself: this unit has no port (installed --no-port); PORT and HOSTNAME are not set.
+# Undo: systemctl --user disable --now livelol-bot && rm ~/.config/systemd/user/livelol-bot.service
+#       (and, if installed with --secrets, ~/.config/systemd/user/livelol-bot.service.d/secrets.conf
+#       and its dir); delete this file (and its livelol-bot.service.d drop-in dir), the unit's
+#       [units.<key>] table in deploy/ports.toml and its line in deploy/private-names.toml (then
+#       re-run scripts/install-private-names.sh); then systemctl --user daemon-reload
+
+[Unit]
+Description=livelol-bot (hosted by everythingdev host_unit)
+After=network-online.target
+Wants=network-online.target
+# Both keys in [Unit]: in [Service] systemd drops StartLimitIntervalSec.
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ianro/dev/github.com/IanStacked/livelol
+Environment=PATH=/home/ianro/dev/github.com/IanStacked/livelol/.venv/bin:/home/ianro/.local/share/mise/installs/python/3.12.14/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/bin/env SINK_TOKEN="$$SINK_INGEST_TOKEN" python main.py
+Restart=always
+RestartSec=10
+TimeoutStopSec=30
+MemoryMax=256M
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=livelol-bot
+
+# INSTALL-HINT: systemctl --user is-active livelol-bot.service    # the unit is active
+
+[Install]
+WantedBy=default.target

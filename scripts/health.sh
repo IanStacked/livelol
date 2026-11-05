@@ -4,10 +4,11 @@
 # Emits ONE JSON object on stdout: {liveness, services, errors, checked_at}.
 # The dashboard runs this live to render the project's health; nothing caches it.
 #
-# The error sink died with the EC2 host on 2026-09-28; SINK_REF defaults empty now,
-# which the errors block below treats as null-safe (kind: none -> nulls).
+# The bot is hosted at home again as the systemd user unit livelol-bot (revived 2026-11-05);
+# its errors go to the fleet sink (PROJECT.yaml error_sink.ref). SINK_REF still defaults empty,
+# which the errors block below treats as null-safe (nulls).
 #
-# Config: PROJECT.yaml error_sink (kind: none, sink dead) + SINK_TOKEN env, unused while empty.
+# Config: PROJECT.yaml error_sink + SINK_TOKEN env; unused while SINK_REF is empty.
 # Liveness comes from the bot's Firestore heartbeat (cogs/background.py writes
 # bot_health/heartbeat every 60s; scripts/heartbeat_check.py reads it). If the check
 # can't run (no uv/creds/network) liveness degrades to `unknown` - never a faked green.
