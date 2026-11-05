@@ -92,7 +92,9 @@ async def get_hero_name(session, hero_id):
                 if response.status == 200:
                     for hero in await response.json():
                         _hero_names[hero["id"]] = hero["name"]
-        except (aiohttp.ClientError, KeyError, TypeError, ValueError) as e:
+        except Exception as e:
+            # Broad on purpose: a TimeoutError is not an aiohttp.ClientError, and
+            # the label fallback below covers every failure.
             logger.warning(f"⚠️ Could not load Deadlock hero names: {e}")
     return _hero_names.get(hero_id, f"Hero #{hero_id}")
 
@@ -111,6 +113,12 @@ def new_matches(history, last_match_id):
         return []
     fresh = [e for e in history if e.get("match_id") and e["match_id"] > last_match_id]
     fresh.sort(key=lambda e: e["match_id"])
+    dropped = len(fresh) - MAX_ANNOUNCE_PER_CYCLE
+    if dropped > 0:
+        logger.info(
+            f"ℹ️ {dropped} older new Deadlock match(es) after {last_match_id} not "
+            f"announced (cap {MAX_ANNOUNCE_PER_CYCLE} per cycle)"
+        )
     return fresh[-MAX_ANNOUNCE_PER_CYCLE:]
 
 

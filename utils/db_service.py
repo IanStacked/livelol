@@ -190,7 +190,9 @@ class DeadlockDatabaseService:
         payload = {
             "account_id": account_id,
             "guild_ids": firestore.ArrayUnion([guild_id_str]),
-            f"server_info.{guild_id_str}": {"added_by": author_id},
+            # A nested map, not a dotted key: set() takes "server_info.<gid>" as a
+            # literal field name, while merge=True deep-merges this map.
+            "server_info": {guild_id_str: {"added_by": author_id}},
         }
         # Only seed the pointer on first sight: re-tracking from a second server
         # must not rewind it (that would re-announce matches).

@@ -2,6 +2,7 @@
 
 from unittest.mock import AsyncMock, MagicMock
 
+import aiohttp
 import pytest
 
 from cogs import deadlock as deadlock_cog
@@ -108,6 +109,47 @@ async def test_get_match_history_error_status_raises():
         await get_match_history(_session(500, None), 42)
 
 
+@pytest.mark.asyncio
+async def test_get_match_history_network_error_raises_api_error():
+    session = MagicMock()
+    session.get.side_effect = aiohttp.ClientError("down")
+    with pytest.raises(DeadlockAPIError):
+        await get_match_history(session, 42)
+
+
+def test_new_matches_logs_dropped_count(monkeypatch):
+    info = MagicMock()
+    monkeypatch.setattr(deadlock_api.logger, "info", info)
+    new_matches([_entry(i) for i in range(100, 108)], 99)
+    assert "3 older new Deadlock match" in info.call_args.args[0]
+
+
+@pytest.fixture
+def _empty_hero_cache(monkeypatch):
+    monkeypatch.setattr(deadlock_api, "_hero_names", {})
+
+
+@pytest.mark.asyncio
+async def test_get_hero_name_fetches_list_once_and_caches(_empty_hero_cache):
+    session = _session(200, [{"id": 1, "name": "Infernus"}])
+    assert await deadlock_api.get_hero_name(session, 1) == "Infernus"
+    assert await deadlock_api.get_hero_name(session, 1) == "Infernus"
+    assert session.get.call_count == 1
+    assert session.get.call_args.args[0].endswith("/v1/assets/heroes")
+
+
+@pytest.mark.asyncio
+async def test_get_hero_name_timeout_falls_back_to_label(_empty_hero_cache):
+    session = MagicMock()
+    session.get.return_value.__aenter__.side_effect = TimeoutError()
+    assert await deadlock_api.get_hero_name(session, 7) == "Hero #7"
+
+
+@pytest.mark.asyncio
+async def test_get_hero_name_error_status_falls_back_to_label(_empty_hero_cache):
+    assert await deadlock_api.get_hero_name(_session(503, None), 7) == "Hero #7"
+
+
 # Views
 
 
@@ -134,6 +176,39 @@ def test_normal_embed_has_win_hero_kda_and_no_rank():
     assert "rank" not in text.lower().replace("ranked", "")
 
 
+def test_ranked_calibration_match_is_labelled():
+    entry = _entry(1, mode=4, ranked_calibration_match=True)
+    text = DeadlockMatchView(entry, "Infernus", "Deadlock 1").minimized_embed
+    assert "(calibration)" in text.description
+
+
+@pytest.mark.asyncio
+async def test_toggle_switches_between_embeds():
+    view = DeadlockMatchView(_entry(1), "Infernus", "Deadlock 1")
+    interaction = MagicMock()
+    interaction.response.edit_message = AsyncMock()
+    await view.toggle_details.callback(interaction)
+    assert view.is_expanded
+    assert interaction.response.edit_message.await_args.kwargs["embed"] is (
+        view.maximized_embed
+    )
+    await view.toggle_details.callback(interaction)
+    assert not view.is_expanded
+    assert interaction.response.edit_message.await_args.kwargs["embed"] is (
+        view.minimized_embed
+    )
+
+
+@pytest.mark.asyncio
+async def test_on_timeout_disables_button_and_edits_message():
+    view = DeadlockMatchView(_entry(1), "Infernus", "Deadlock 1")
+    view.message = MagicMock()
+    view.message.edit = AsyncMock()
+    await view.on_timeout()
+    assert all(item.disabled for item in view.children)
+    view.message.edit.assert_awaited_once_with(view=view)
+
+
 # DB service
 
 
@@ -155,7 +230,37 @@ async def test_track_user_seeds_pointer_on_first_sight():
     db.collection.assert_called_with(DEADLOCK_TRACKED_USERS_COLLECTION)
     payload = doc_ref.set.call_args.args[0]
     assert payload["last_match_id"] == 500
-    assert payload["server_info.111"] == {"added_by": 9}
+    assert payload["server_info"] == {"111": {"added_by": 9}}
+    assert not any("." in key for key in payload)
+    assert doc_ref.set.call_args.kwargs == {"merge": True}
+
+
+@pytest.mark.asyncio
+async def test_track_user_wraps_unexpected_error():
+    service, doc_ref, _ = _service(None)
+    doc_ref.set.side_effect = RuntimeError("down")
+    with pytest.raises(DatabaseError):
+        await service.track_user(111, 9, 42, 500)
+
+
+@pytest.mark.asyncio
+async def test_get_all_tracked_users_returns_dicts_from_deadlock_collection():
+    doc = MagicMock()
+    doc.to_dict.return_value = {"account_id": 42}
+    db = MagicMock()
+    db.collection.return_value.stream.return_value = [doc]
+    assert await DeadlockDatabaseService(db).get_all_tracked_users() == [
+        {"account_id": 42}
+    ]
+    db.collection.assert_called_once_with(DEADLOCK_TRACKED_USERS_COLLECTION)
+
+
+@pytest.mark.asyncio
+async def test_update_player_data_updates_doc_keyed_by_str_account_id():
+    service, doc_ref, db = _service(None)
+    await service.update_player_data(42, {"last_match_id": 7})
+    db.collection.return_value.document.assert_called_once_with("42")
+    doc_ref.update.assert_called_once_with({"last_match_id": 7})
 
 
 @pytest.mark.asyncio
@@ -219,6 +324,27 @@ async def test_untrack_all_users_removes_only_that_guild():
     assert written["server_info"] == {"222": {"added_by": 2}}
 
 
+@pytest.mark.asyncio
+async def test_untrack_all_users_deletes_doc_when_last_guild():
+    doc = MagicMock()
+    doc.to_dict.return_value = {"guild_ids": ["111"], "server_info": {}}
+    db = MagicMock()
+    db.collection.return_value.where.return_value.stream.return_value = [doc]
+    await DeadlockDatabaseService(db).untrack_all_users(111)
+    doc.reference.delete.assert_called_once()
+    doc.reference.set.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_untrack_all_users_wraps_unexpected_error():
+    db = MagicMock()
+    db.collection.return_value.where.return_value.stream.side_effect = RuntimeError(
+        "down"
+    )
+    with pytest.raises(DatabaseError):
+        await DeadlockDatabaseService(db).untrack_all_users(111)
+
+
 # Cog
 
 
@@ -227,6 +353,9 @@ def test_parse_account_id():
     assert parse_account_id("abc") is None
     assert parse_account_id("0") is None
     assert parse_account_id("-5") is None
+    assert parse_account_id("\u00b2") is None  # superscript two passes isdigit
+    assert parse_account_id(str(2**31 - 1)) == 2**31 - 1
+    assert parse_account_id(str(2**31)) is None
 
 
 def _cog(users, last_channel=True):
@@ -316,6 +445,68 @@ async def test_loop_guild_without_channel_config_is_skipped(monkeypatch):
     cog.bot.db_service.get_guild_config = AsyncMock(return_value=None)
     await _run_loop(cog, [_entry(20)], monkeypatch)
     channel.send.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_loop_reads_each_guild_config_once_per_player(monkeypatch):
+    user = {"account_id": 42, "guild_ids": ["111", "222"], "last_match_id": 10}
+    cog, channel = _cog([user])
+    await _run_loop(cog, [_entry(i) for i in range(11, 16)], monkeypatch)
+    assert channel.send.await_count == 10
+    assert cog.bot.db_service.get_guild_config.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_loop_hero_lookup_error_leaves_pointer_unmoved(monkeypatch):
+    user = {"account_id": 42, "guild_ids": ["111"], "last_match_id": 10}
+    cog, channel = _cog([user])
+    monkeypatch.setattr(
+        deadlock_cog, "get_hero_name", AsyncMock(side_effect=TimeoutError())
+    )
+    await _run_loop(cog, [_entry(11)], monkeypatch)
+    cog.dl_db.update_player_data.assert_not_awaited()
+    channel.send.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_loop_unexpected_player_error_does_not_abort_cycle(monkeypatch):
+    users = [
+        {"account_id": 1, "guild_ids": ["111"], "last_match_id": 1},
+        {"account_id": 2, "guild_ids": ["111"], "last_match_id": 1},
+    ]
+    cog, channel = _cog(users)
+    fetch = AsyncMock(side_effect=[RuntimeError("boom"), [_entry(5)]])
+    monkeypatch.setattr(deadlock_cog, "get_match_history", fetch)
+    await Deadlock.deadlock_update_task.coro(cog)
+    assert channel.send.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_loop_survives_tracked_users_read_error():
+    cog, channel = _cog([])
+    cog.dl_db.get_all_tracked_users = AsyncMock(side_effect=RuntimeError("down"))
+    await Deadlock.deadlock_update_task.coro(cog)
+    channel.send.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_on_guild_remove_untracks_that_guild():
+    cog, _ = _cog([])
+    cog.dl_db.untrack_all_users = AsyncMock()
+    guild = MagicMock()
+    guild.id = 111
+    await Deadlock.on_guild_remove(cog, guild)
+    cog.dl_db.untrack_all_users.assert_awaited_once_with(111)
+
+
+@pytest.mark.asyncio
+async def test_commands_raise_when_database_unavailable():
+    cog, _ = _cog([])
+    cog.bot.db = None
+    with pytest.raises(DatabaseError):
+        await Deadlock.trackdl.callback(cog, _ctx(), "42")
+    with pytest.raises(DatabaseError):
+        await Deadlock.untrackdl.callback(cog, _ctx(), "42")
 
 
 def _ctx():

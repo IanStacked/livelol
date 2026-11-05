@@ -17,11 +17,18 @@ from utils.logger_config import logger
 
 
 def parse_account_id(raw):
-    """Steam account id (SteamID3) as a positive int, or None."""
+    """Steam account id (SteamID3) as a positive int, or None.
+
+    ASCII digits only (isdigit alone passes superscripts, which int() rejects), and
+    bounded at 2**31 - 1 because the API types account_id as int32.
+    """
     raw = raw.strip()
-    if not raw.isdigit() or int(raw) <= 0 or int(raw) > 2**32 - 1:
+    if not (raw.isascii() and raw.isdigit()):
         return None
-    return int(raw)
+    value = int(raw)
+    if value <= 0 or value > 2**31 - 1:
+        return None
+    return value
 
 
 class Deadlock(commands.Cog):
@@ -111,17 +118,29 @@ class Deadlock(commands.Cog):
                                 )
                         await asyncio.sleep(1.5)
                         continue
+                    # Hero names are resolved before the pointer moves, so a failed
+                    # lookup skips this cycle instead of losing the matches for good.
+                    named = [
+                        (
+                            entry,
+                            await get_hero_name(self.bot.session, entry.get("hero_id")),
+                        )
+                        for entry in fresh
+                    ]
+                    # One config read per guild per player, not per match.
+                    channel_ids = {
+                        guild: await self._channel_id(guild) for guild in guild_ids
+                    }
                     # Deliberately written before the guild-send loop: a failed send
                     # is a silent, non-retried miss rather than a duplicate later.
                     await self.dl_db.update_player_data(
                         account_id, {"last_match_id": newest_match_id(history)}
                     )
-                    for entry in fresh:
-                        hero_name = await get_hero_name(
-                            self.bot.session, entry.get("hero_id")
-                        )
-                        for guild in guild_ids:
-                            await self._announce(guild, entry, hero_name, account_id)
+                    for entry, hero_name in named:
+                        for guild, channel_id in channel_ids.items():
+                            await self._announce(
+                                guild, channel_id, entry, hero_name, account_id
+                            )
                     # Stay well under the API rate limit.
                     await asyncio.sleep(1.5)
                 except LiveLOLError as e:
@@ -131,12 +150,19 @@ class Deadlock(commands.Cog):
         except Exception as e:
             logger.exception(f"❌ ERROR: {e}")
 
-    async def _announce(self, guild, entry, hero_name, account_id):
-        """Post one match to one guild; a failure there never blocks other guilds."""
+    async def _channel_id(self, guild):
+        """The guild's configured channel id, or None (also on a read error)."""
         try:
-            channel_id = await self.bot.db_service.get_guild_config(guild)
-            if channel_id is None:
-                return
+            return await self.bot.db_service.get_guild_config(guild)
+        except Exception as e:
+            logger.exception(f"❌ ERROR reading channel config for {guild}: {e}")
+            return None
+
+    async def _announce(self, guild, channel_id, entry, hero_name, account_id):
+        """Post one match to one guild; a failure there never blocks other guilds."""
+        if channel_id is None:
+            return
+        try:
             channel = self.bot.get_channel(channel_id)
             if channel is None:
                 return
