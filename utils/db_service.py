@@ -158,3 +158,106 @@ class DatabaseService:
         except Exception as e:
             logger.exception(f"❌ ERROR: untracking: {e}")
             raise DatabaseError(f"Database write failed for player {riot_id}.") from e
+
+
+# Sibling of tracked_users, keyed by Steam account_id (as a string). Same
+# guild_ids / server_info shape. Lives here, not in database.py, to keep the
+# League code untouched.
+DEADLOCK_TRACKED_USERS_COLLECTION = "deadlock_tracked_users"
+
+
+class DeadlockDatabaseService:
+    """Firestore operations for the Deadlock watchlist (mirrors DatabaseService)."""
+
+    def __init__(self, db):
+        self.db = db
+
+    async def get_all_tracked_users(self):
+        docs = self.db.collection(DEADLOCK_TRACKED_USERS_COLLECTION).stream()
+        return [doc.to_dict() for doc in docs]
+
+    async def update_player_data(self, account_id, data):
+        doc_ref = self.db.collection(DEADLOCK_TRACKED_USERS_COLLECTION).document(
+            str(account_id)
+        )
+        doc_ref.update(data)
+
+    async def track_user(self, guild_id, author_id, account_id, last_match_id):
+        guild_id_str = str(guild_id)
+        doc_ref = self.db.collection(DEADLOCK_TRACKED_USERS_COLLECTION).document(
+            str(account_id)
+        )
+        payload = {
+            "account_id": account_id,
+            "guild_ids": firestore.ArrayUnion([guild_id_str]),
+            f"server_info.{guild_id_str}": {"added_by": author_id},
+        }
+        # Only seed the pointer on first sight: re-tracking from a second server
+        # must not rewind it (that would re-announce matches).
+        try:
+            existing = doc_ref.get()
+            has_pointer = existing.exists and existing.to_dict().get("last_match_id")
+            if not has_pointer and last_match_id is not None:
+                payload["last_match_id"] = last_match_id
+            doc_ref.set(payload, merge=True)
+        except Exception as e:
+            logger.exception(f"❌ ERROR: tracking deadlock player: {e}")
+            raise DatabaseError(
+                f"Database write failed for player {account_id}."
+            ) from e
+
+    async def untrack_user(self, guild_id, account_id):
+        guild_id_str = str(guild_id)
+        doc_ref = self.db.collection(DEADLOCK_TRACKED_USERS_COLLECTION).document(
+            str(account_id)
+        )
+        try:
+            doc = doc_ref.get()
+            if not doc.exists:
+                raise UserNotFoundError(f"{account_id} is not being tracked.")
+            data = doc.to_dict()
+            guild_list = data.get("guild_ids", [])
+            if guild_id_str not in guild_list:
+                raise UserNotFoundError(
+                    f"{account_id} is not being tracked in this server.",
+                )
+            guild_list.remove(guild_id_str)
+            if not guild_list:
+                doc_ref.delete()
+            else:
+                data["guild_ids"] = guild_list
+                data.get("server_info", {}).pop(guild_id_str, None)
+                doc_ref.set(data)
+        except UserNotFoundError:
+            raise
+        except Exception as e:
+            logger.exception(f"❌ ERROR: untracking deadlock player: {e}")
+            raise DatabaseError(
+                f"Database write failed for player {account_id}."
+            ) from e
+
+    async def untrack_all_users(self, guild_id):
+        guild_id_str = str(guild_id)
+        try:
+            docs = (
+                self.db.collection(DEADLOCK_TRACKED_USERS_COLLECTION)
+                .where(filter=FieldFilter("guild_ids", "array_contains", guild_id_str))
+                .stream()
+            )
+            for doc in list(docs):
+                data = doc.to_dict()
+                guild_list = data.get("guild_ids", [])
+                guild_list.remove(guild_id_str)
+                if not guild_list:
+                    doc.reference.delete()
+                else:
+                    data["guild_ids"] = guild_list
+                    data.get("server_info", {}).pop(guild_id_str, None)
+                    doc.reference.set(data)
+        except Exception as e:
+            logger.exception(
+                f"❌ ERROR: failed to untrack all deadlock players from {guild_id}: {e}"
+            )
+            raise DatabaseError(
+                f"Database operation failed for guild {guild_id}: {e}",
+            ) from e
