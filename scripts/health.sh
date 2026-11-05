@@ -4,10 +4,15 @@
 # Emits ONE JSON object on stdout: {liveness, services, errors, checked_at}.
 # The dashboard runs this live to render the project's health; nothing caches it.
 #
-# The error sink died with the EC2 host on 2026-09-28; SINK_REF defaults empty now,
-# which the errors block below treats as null-safe (kind: none -> nulls).
+# The bot is hosted at home again as the systemd user unit livelol-bot (revived 2026-11-05);
+# its errors go to the fleet sink (PROJECT.yaml error_sink.ref), and the errors block reads them
+# back from that sink's `GET /stats`.
 #
-# Config: PROJECT.yaml error_sink (kind: none, sink dead) + SINK_TOKEN env, unused while empty.
+# Config: SINK_REF (default http://127.0.0.1:8787, PROJECT.yaml error_sink.ref) and the sink's read
+# token SINK_TOKEN - from the environment where set, else from the operator's sink token file
+# (~/.everythingdev-sink.env, as food-review's health.sh reads it), sourced in a subshell so only
+# that one value comes back out. With no token or an unreachable sink the counts are `null` ("not
+# known"); the sink is not a hard dependency.
 # Liveness comes from the bot's Firestore heartbeat (cogs/background.py writes
 # bot_health/heartbeat every 60s; scripts/heartbeat_check.py reads it). If the check
 # can't run (no uv/creds/network) liveness degrades to `unknown` - never a faked green.
@@ -15,10 +20,17 @@ set -euo pipefail
 
 PROJECT="${PROJECT:-livelol}"
 WINDOW="${WINDOW:-24h}"
-SINK_REF="${SINK_REF:-}"   # PROJECT.yaml error_sink.ref; empty (default) skips the sink query
+SINK_REF="${SINK_REF-http://127.0.0.1:8787}"   # PROJECT.yaml error_sink.ref; set empty to skip the sink
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# --- errors block (null-safe; kind: none -> nulls) ----------------------------
+# --- errors block (null-safe: no token or sink down -> null counts) -----------
+if [[ -z "${SINK_TOKEN:-}" ]]; then
+  SINK_TOKEN_FILE="${HOME:-}/.everythingdev-sink.env"
+  if [[ -n "${HOME:-}" && -r "$SINK_TOKEN_FILE" ]]; then
+    SINK_TOKEN="$( . "$SINK_TOKEN_FILE" >/dev/null 2>&1; printf '%s' "${SINK_TOKEN:-}" )"
+  fi
+fi
+export SINK_TOKEN="${SINK_TOKEN:-}"
 if [[ -n "$SINK_REF" ]]; then
   ERRORS="$(python3 "$HERE/errors_block.py" --project "$PROJECT" --window "$WINDOW" \
              --ref "$SINK_REF" --token-env SINK_TOKEN)"

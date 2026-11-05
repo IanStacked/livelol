@@ -24,7 +24,7 @@ graph LR
         Image[Docker Image / GHCR]
     end
 
-    subgraph AWS [AWS EC2 Instance - ran until 2026-09-28, not deployed now]
+    subgraph AWS [AWS EC2 Instance - ran until 2026-09-28, since replaced by a home-server systemd unit]
         subgraph Docker [Docker Container]
             Bot[Discord Bot Core]
             Env[Environment Variables]
@@ -68,11 +68,25 @@ graph LR
     style External fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000000
 ```
 
-## Hosting (history)
-The bot ran on an AWS EC2 instance, deployed by GitHub Actions on every merge to
-`main`, until the operator tore the host down on 2026-09-28. The bot is not
-deployed anywhere now, and `main` no longer builds or pushes a deploy image.
-The last deployed image tags remain on Docker Hub under `league-bot`.
+## Hosting
+The bot ran on an AWS EC2 instance, deployed by GitHub Actions, until the operator tore
+that host down on 2026-09-28. It is hosted again on the operator's home server as a
+systemd user unit, `livelol-bot`, memory-capped at 256 MB. The unit file is
+`deploy/livelol-bot.service` plus a drop-in in `deploy/livelol-bot.service.d/`; both are
+rendered by everythingdev's `lib/host_unit.py` (re-run its install rather than editing them).
+The drop-in names secret variables and holds no values; a diffgate `secret-leak` hit on it is a
+known false alarm the kit-rendered file cannot carry an allow marker for (everythingdev finding
+1793877530963-2da036).
+Secrets (`DISCORD_PUBLIC_KEY`, `RIOT_API_KEY`, `FIREBASE_CREDENTIALS_BASE64`) are read from
+`~/.secrets.sh` at start and never written into a unit file. A merge to `main` runs tests,
+lint and a no-push Docker build, and deploys nothing: updating the running bot is a
+`git pull`, then `uv sync` when the pull changed `pyproject.toml` or `uv.lock` (the unit runs
+from the project's `.venv`), then `systemctl --user restart livelol-bot`.
+
+Undo: `systemctl --user disable --now livelol-bot.service`; remove the unit's links under
+`~/.config/systemd/user` (the service and its `livelol-bot.service.d/` drop-in folder); delete
+`deploy/livelol-bot.service` and `deploy/livelol-bot.service.d/`; remove its `[units.livelol-bot]`
+table in everythingdev's `deploy/ports.toml`; then `systemctl --user daemon-reload`.
 
 ## Preview
 The bot provides toggleable match summaries. Users can view a high-level rank update or expand the view to see the full role-sorted team breakdown. Includes region information.
