@@ -1,11 +1,10 @@
 # LiveLOL
 A Discord bot that tracks League of Legends players in real-time.
 
-## Installation
-1. Click this link and select which server you want to add the bot to.
-    * https://discord.com/oauth2/authorize?client_id=1441206408577290400
-2. Type !help and read disclaimers and important information.
-3. Use !track to begin tracking users in your server, making sure to use !updateshere in the channel you want live updates posted in.
+## Access
+This bot is private. It runs only for the owner's own Discord servers, on a Riot Personal API key, and is not offered for others to add to their servers.
+
+In those servers, type !help for disclaimers and important information, use !track to begin tracking users, and use !updateshere in the channel you want live updates posted in.
 
 ## System Architecture
 ```mermaid
