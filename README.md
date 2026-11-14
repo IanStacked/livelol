@@ -1,11 +1,10 @@
 # LiveLOL
 A Discord bot that tracks League of Legends players in real-time.
 
-## Installation
-1. Click this link and select which server you want to add the bot to.
-    * https://discord.com/oauth2/authorize?client_id=1441206408577290400
-2. Type !help and read disclaimers and important information.
-3. Use !track to begin tracking users in your server, making sure to use !updateshere in the channel you want live updates posted in.
+## Access
+This bot is private. It runs only for the owner's own Discord servers, on a Riot Personal API key, and is not offered for others to add to their servers.
+
+In those servers, type !help for disclaimers and important information, use !track to begin tracking users, and use !updateshere in the channel you want live updates posted in.
 
 ## System Architecture
 ```mermaid
@@ -24,7 +23,7 @@ graph LR
         Image[Docker Image / GHCR]
     end
 
-    subgraph AWS [AWS EC2 Instance]
+    subgraph AWS [AWS EC2 Instance - ran until 2026-09-28, since replaced by a home-server systemd unit]
         subgraph Docker [Docker Container]
             Bot[Discord Bot Core]
             Env[Environment Variables]
@@ -41,13 +40,13 @@ graph LR
         Sentry{{Sentry.io}}
     end
 
-    %% Deployment Path
+    %% Deployment Path (historical - ended 2026-09-28, no longer runs)
     Dev -->|Push Code| Repo
     Repo -->|Trigger Build| Actions
     Secrets -->|Inject Secrets| Actions
-    Actions -->|Build & Push| Image
-    Image -->|Pull Image| Bot
-    Actions -.->|Configures| Env
+    Actions -.->|Built & Pushed, until 2026-09-28| Image
+    Image -.->|Pulled, until 2026-09-28| Bot
+    Actions -.->|Configured, until 2026-09-28| Env
 
     %% User Interaction Path
     User -->|Sends Command| Server
@@ -68,35 +67,25 @@ graph LR
     style External fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000000
 ```
 
-## Rollback
-Every merge to `main` deploys, and the deploy pushes two tags from one build:
-`league-bot:latest` (what the box pulls) and an immutable `league-bot:<commit-sha>`.
-The box only ever pulls `:latest`, so it keeps no `<sha>` images locally - the old
-build goes dangling and gets pruned. The immutable `<sha>` tags live in the Docker
-Hub registry, and that registry is the rollback source.
+## Hosting
+The bot ran on an AWS EC2 instance, deployed by GitHub Actions, until the operator tore
+that host down on 2026-09-28. It is hosted again on the operator's home server as a
+systemd user unit, `livelol-bot`, memory-capped at 256 MB. The unit file is
+`deploy/livelol-bot.service` plus a drop-in in `deploy/livelol-bot.service.d/`; both are
+rendered by everythingdev's `lib/host_unit.py` (re-run its install rather than editing them).
+The drop-in names secret variables and holds no values; a diffgate `secret-leak` hit on it is a
+known false alarm the kit-rendered file cannot carry an allow marker for (everythingdev finding
+1793877530963-2da036).
+Secrets (`DISCORD_PUBLIC_KEY`, `RIOT_API_KEY`, `FIREBASE_CREDENTIALS_BASE64`) are read from
+`~/.secrets.sh` at start and never written into a unit file. A merge to `main` runs tests,
+lint and a no-push Docker build, and deploys nothing: updating the running bot is a
+`git pull`, then `uv sync` when the pull changed `pyproject.toml` or `uv.lock` (the unit runs
+from the project's `.venv`), then `systemctl --user restart livelol-bot`.
 
-To roll back to a known-good build, SSH to the EC2 host and run (the `.env` from
-the last deploy is already on disk; `<DOCKER_USER>` is the Docker Hub account):
-
-```bash
-# Pick a known-good <good-sha> from the Docker Hub tags for <DOCKER_USER>/league-bot
-# (the registry keeps every <sha>; the box does not) or from the CI run history.
-
-sudo docker stop my-bot || true
-sudo docker rm my-bot || true
-sudo docker pull <DOCKER_USER>/league-bot:<good-sha>
-sudo docker run -d \
-  --restart always \
-  --env-file .env \
-  --name my-bot \
-  <DOCKER_USER>/league-bot:<good-sha>
-
-# Confirm it came up:
-sudo docker logs -f my-bot
-```
-
-To return to the tip, re-run the same block with `:latest` (or push a revert
-commit to `main`, which redeploys through CI).
+Undo: `systemctl --user disable --now livelol-bot.service`; remove the unit's links under
+`~/.config/systemd/user` (the service and its `livelol-bot.service.d/` drop-in folder); delete
+`deploy/livelol-bot.service` and `deploy/livelol-bot.service.d/`; remove its `[units.livelol-bot]`
+table in everythingdev's `deploy/ports.toml`; then `systemctl --user daemon-reload`.
 
 ## Preview
 The bot provides toggleable match summaries. Users can view a high-level rank update or expand the view to see the full role-sorted team breakdown. Includes region information.
@@ -127,10 +116,10 @@ Track the progress of everyone in your guild with a formatted, real-time leaderb
     * Persistent Sessions that reduce latency and resource consumption
 3. Scalable Data Architecture
     * NoSQL Storage using Google Firestore
-    * Hosted on AWS EC2
+    * Ran on AWS EC2 until 2026-09-28; not deployed now
 4. DevOps Pipeline
-    * Containerization for consistent deployment
-    * Github Actions workflow for CI/CD
+    * Containerization, used while deployed
+    * Github Actions workflow for CI (the CD half retired with the host on 2026-09-28)
     * Unit Tests
     * Linting via Ruff enforced before every push
 5. Region Handling
@@ -143,7 +132,7 @@ Track the progress of everyone in your guild with a formatted, real-time leaderb
 | :--- | :--- | :--- |
 | **Language** | Python 3.12 | Stable Python version with solid performance. |
 | **Environment** | UV & Ruff | Chosen for dependency resolution and flexible linting. |
-| **Infrastructure** | AWS EC2 & Docker | Ensures 24/7 uptime and environment parity between local dev and production. |
+| **Infrastructure** | AWS EC2 & Docker | Ran on EC2 until 2026-09-28 for 24/7 uptime and dev/prod parity; not deployed now. |
 | **Database** | Firebase Firestore | NoSQL structure allows for flexible "tracked user" schema and real-time updates. |
 | **Observability**| Sentry.io | Provides proactive error tracking and performance monitoring in the cloud. |
 

@@ -116,6 +116,9 @@ class Background(commands.Cog):
                     # the streak. Only advance the pointer on a real match id.
                     if match_id:
                         data["last_match_id"] = match_id
+                    # Deliberately written before the guild-send loop below: a failed
+                    # send is then a silent, non-retried miss rather than risking a
+                    # duplicate notification on a later cycle.
                     await self.bot.db_service.update_ranked_data(puuid, data)
                     new_riot_id = check_new_riot_id(
                         processed_match_info,
